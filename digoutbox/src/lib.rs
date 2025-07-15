@@ -351,17 +351,11 @@ mod tests {
         let mut inst = DigOutBox::new(loopback);
 
         let scs = inst.get_software_control_status().unwrap();
-        assert_eq!(
-        scs,
-            SoftwareControlStatus::Ready
-        );
+        assert_eq!(scs, SoftwareControlStatus::Ready);
         assert!(format!("{scs}").contains("Software control is possible."));
 
         let scs = inst.get_software_control_status().unwrap();
-        assert_eq!(
-        scs,
-            SoftwareControlStatus::LockedOut
-        );
+        assert_eq!(scs, SoftwareControlStatus::LockedOut);
         assert!(format!("{scs}").contains("is locked out"));
 
         {

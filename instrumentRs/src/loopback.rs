@@ -122,8 +122,7 @@ mod tests {
 
     #[test]
     fn test_loopback_instrument() {
-        let mut instrument =
-            LoopbackInterface::new(vec!["CMD1", "CMD2"], vec![]);
+        let mut instrument = LoopbackInterface::new(vec!["CMD1", "CMD2"], vec![]);
 
         instrument
             .sendcmd("CMD1")
@@ -137,8 +136,7 @@ mod tests {
     #[should_panic(expected = "Sendcommand mismatch: expected 'CMD1', got 'CMD3'")]
     #[test]
     fn test_loopback_instrument_mismatch() {
-        let mut instrument =
-            LoopbackInterface::new(vec!["CMD1"], vec!["RESP1"]);
+        let mut instrument = LoopbackInterface::new(vec!["CMD1"], vec!["RESP1"]);
 
         instrument
             .sendcmd("CMD3")
@@ -163,8 +161,7 @@ mod tests {
     #[should_panic(expected = "Leftover expected commands found from host to instrument: CMD")]
     #[test]
     fn test_loopback_leftover_commands_both() {
-        let mut instrument =
-            LoopbackInterface::new(vec!["CMD"], vec!["RESP"]);
+        let mut instrument = LoopbackInterface::new(vec!["CMD"], vec!["RESP"]);
         instrument.finalize();
     }
 }

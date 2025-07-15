@@ -82,12 +82,14 @@ use thiserror::Error;
 #[non_exhaustive]
 pub enum InstrumentError {
     /// The channel index requested is out of range.
-    #[error("Channel with index {idx} is out of range. Number of channels available: {nof_channels}")]
-    ChannelIndexOutOfRange { 
+    #[error(
+        "Channel with index {idx} is out of range. Number of channels available: {nof_channels}"
+    )]
+    ChannelIndexOutOfRange {
         /// Index of the channel that is out of range.
-        idx: usize, 
+        idx: usize,
         /// Total number of channels.
-        nof_channels: usize 
+        nof_channels: usize,
     },
     /// A given float value is out of the specified range.
     #[error("Float value {value} is out of range. Allowed range is [{min}, {max}]")]
@@ -116,7 +118,9 @@ pub enum InstrumentError {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     /// Timeout occured while waiting for a response to a query.
-    #[error("Timeout occured while waiting for a response to query: {query}. Timeout was set to {timeout:?}.")]
+    #[error(
+        "Timeout occured while waiting for a response to query: {query}. Timeout was set to {timeout:?}."
+    )]
     TimeoutQuery {
         /// The query that timed out.
         query: String,
@@ -141,7 +145,9 @@ pub trait InstrumentInterface {
     ///
     /// # Arguments:
     /// - `_cmd` - A string slice that will be sent to the instrument.
-    fn sendcmd(&mut self, _cmd: &str) -> Result<(), InstrumentError> { Err(InstrumentError::InterfaceCommandNotSupported) }
+    fn sendcmd(&mut self, _cmd: &str) -> Result<(), InstrumentError> {
+        Err(InstrumentError::InterfaceCommandNotSupported)
+    }
 
     /// Query the instrument with a command and return the response as a String.
     ///
@@ -152,11 +158,13 @@ pub trait InstrumentInterface {
     ///
     /// # Arguments
     /// * `_cmd` - The command to send to the instrument for which we expect a response.
-    fn query(&mut self, _cmd: &str) -> Result<String, InstrumentError> { Err(InstrumentError::InterfaceCommandNotSupported) }
+    fn query(&mut self, _cmd: &str) -> Result<String, InstrumentError> {
+        Err(InstrumentError::InterfaceCommandNotSupported)
+    }
 
     /// Set the terminator of an interface from a `&str`.
     ///
-    /// # Arguments: 
-    /// - `_terminator` - A string slice that will be used as the terminator for commands 
+    /// # Arguments:
+    /// - `_terminator` - A string slice that will be used as the terminator for commands
     fn set_terminator(&mut self, _terminator: &str) {}
 }

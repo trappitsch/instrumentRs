@@ -28,13 +28,21 @@ fn main() {
     let ch7_status = ch7.get_output().unwrap();
     println!("Channel 7 output status: {ch7_status}");
     ch7.set_output(!ch7_status).unwrap();
-    println!("Channel 7 output status after toggle: {}", ch7.get_output().unwrap());
+    println!(
+        "Channel 7 output status after toggle: {}",
+        ch7.get_output().unwrap()
+    );
 
     // Print the status of all outputs as a vector of booleans
-    println!("All output are set do: {:?}", inst.get_all_outputs().unwrap());
+    println!(
+        "All output are set do: {:?}",
+        inst.get_all_outputs().unwrap()
+    );
 
     // Print out the interlock and software control status
     println!("Interlock status: {}", inst.get_interlock_status().unwrap());
-    println!("Software control status: {}", inst.get_software_control_status().unwrap());
+    println!(
+        "Software control status: {}",
+        inst.get_software_control_status().unwrap()
+    );
 }
-
