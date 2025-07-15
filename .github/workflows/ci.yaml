@@ -37,6 +37,8 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
+    - name: Install libudev
+      run: sudo apt-get install libudev-dev
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@stable
     - run: cargo clippy -- -D warnings

@@ -80,7 +80,7 @@ impl From<&str> for SoftwareControlStatus {
 /// you can use a blocking serial interface using [`serialport`]. Assuming the DigOutBox is
 /// available as `/dev/ttyACM0`, you could initialize this driver as following.
 ///
-/// ```rust
+/// ```no_run
 /// use std::time::Duration;
 /// use instrumentrs::SerialInstrument;
 /// use digoutbox::DigOutBox;
