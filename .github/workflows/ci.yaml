@@ -24,6 +24,7 @@ jobs:
       run: sudo apt-get install libudev-dev
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@stable
+    - uses: dtolnay/install@cargo-tarpaulin
     - run: cargo test 
     - name: Generate code coverage with tarpaulin
       run: |
