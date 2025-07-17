@@ -25,7 +25,7 @@
 //! While InstrumentRs is not a collection of drivers and only allows you to write a simplified
 //! driver, we will host drivers here as well and maintain them. This means: If you would like to
 //! write a driver but do not want to maintain it, please raise an issue in the InstrumentRs
-//! repository on GitHub in order to get your driver added here. This will mean that we can take
+//! repository on GitHub in order to get your driver added here. This means that we will take
 //! over maintainership of the driver and release them as bugs get squished, etc. In order for this
 //! to work, all functionality of your instrument driver must be tested with hardware, but also
 //! with tests using the provided `LoopbackInterface`.
@@ -61,13 +61,15 @@
 
 #![warn(missing_docs)]
 
-// mod async_serial;
 mod loopback;
 mod serial;
+mod tcp_ip;
 
-// pub use async_serial::AsyncSerialInstrument;
+use std::time::{Duration, Instant};
+
 pub use loopback::LoopbackInterface;
-pub use serial::{SerialInstrument, SerialInstrumentError};
+pub use serial::SerialInstrument;
+pub use tcp_ip::TcpIpInstrument;
 
 use thiserror::Error;
 
@@ -75,13 +77,18 @@ use thiserror::Error;
 ///
 /// For any command sending or querying, your instrument should return either an empty result or a
 /// result with the query where this Error is the alternative. `InstrumentError` makes it easy to
-/// propagate all the sending commands, querying errors forward with the ? operator such that
+/// propagate all the sending commands, querying errors forward with the `?` operator such that
 /// errors propagate nicely. If this is not possible, it is considered a bug and should be
 /// reported.
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum InstrumentError {
-    /// The channel index requested is out of range.
+    /// The instrument did not acknowledge the command that was sent. The response received is
+    /// returned in the error as a String.
+    #[error("Instrument did not acknowledge the command sent, but responded with: {0}")]
+    NotAcknowledged(String),
+    /// The channel index requested is out of range. The error contains the index requested and
+    /// the number of channels that are currently configured.
     #[error(
         "Channel with index {idx} is out of range. Number of channels available: {nof_channels}"
     )]
@@ -91,7 +98,8 @@ pub enum InstrumentError {
         /// Total number of channels.
         nof_channels: usize,
     },
-    /// A given float value is out of the specified range.
+    /// A given float value is out of the specified range. The error contains the value that was
+    /// sent, the minimum value that is allowed, and the maximum value that is allowed.
     #[error("Float value {value} is out of range. Allowed range is [{min}, {max}]")]
     FloatValueOutOfRange {
         /// The value that is out of range.
@@ -101,10 +109,8 @@ pub enum InstrumentError {
         /// The maximum value that is allowed.
         max: f64,
     },
-    /// The called command is not supported by this interface.
-    #[error("This command is not supported by this interface.")]
-    InterfaceCommandNotSupported,
-    /// A given integer value is out of the specified range.
+    /// A given integer value is out of the specified range. The error contains the value that was
+    /// sent, the minimum value that is allowed, and the maximum value that is allowed.
     #[error("Integer value {value} is out of range. Allowed range is [{min}, {max}]")]
     IntValueOutOfRange {
         /// The value that is out of range.
@@ -117,7 +123,29 @@ pub enum InstrumentError {
     /// Error when reading from/writing to an interface. See [`std::io::Error`] for more details.
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    /// Timeout occured while waiting for a response to a query.
+    /// Instrument status is not okay, e.g., a response from the instrument did not succeed with a
+    /// given error message. This error contains a string with the error message that is intended
+    /// to be displayed for the user, i.e., "Sensor not calibrated". Note that the string is
+    /// directly displayed without any further formatting, so you need to ensure that it is
+    /// descriptive enough for the user.
+    #[error("{0}")]
+    InstrumentStatus(String),
+    /// Instrument response could not be parsed becuase it was unexpected by the driver. This error
+    /// contains the response that was received from the instrument.
+    #[error("Response from instrument could not be parsed. Response was: {0}")]
+    ResponseParseError(String),
+    /// Serial port errors can occur when opening a serial interface. See the [`serialport::Error`]
+    /// documentation for more information.
+    #[error(transparent)]
+    Serialport(#[from] serialport::Error),
+    /// Timeout occurred while waiting for a response from the instrument. The error contains the
+    /// timeout that was exceeded.
+    #[error(
+        "Timeout occured while waiting for a response from the instrument. Timeout was set to {0:?}."
+    )]
+    Timeout(Duration),
+    /// Timeout occurred while waiting for a response to a query. The error contains the query
+    /// that was sent and the timeout that was exceeded.
     #[error(
         "Timeout occured while waiting for a response to query: {query}. Timeout was set to {timeout:?}."
     )]
@@ -125,28 +153,34 @@ pub enum InstrumentError {
         /// The query that timed out.
         query: String,
         /// The timeout that was set.
-        timeout: std::time::Duration,
+        timeout: Duration,
     },
 }
 
 /// The `InstrumentInterface` trait defines the interface for controlling instruments.
 ///
-/// It currently contains a method for sending commands and querying responsed from the instrument.
-/// A blocking implmentation for these methods should probably always be requried.
+/// It currently contains a method for sending commands and querying responses from the instrument.
+/// A blocking implementation for these methods should probably always be required.
 ///
 /// Furthermore, additional methods for reading and writing data in blocking mode and
 /// asynchronously can be provided, however, are not currently required as part of the trait.
 pub trait InstrumentInterface {
-    /// Send a command to the instrument.
+    /// Check if an acknowledgment is received from the instrument.
     ///
-    /// This function takes the command, appends the terminator, and writes it to the instrument.
-    /// The interface is then flushed to ensure that the command is sent immediately.
-    /// instrument.
+    /// This function checks if the instrument acknowledges the command sent to it with the correct
+    /// return value or not. If no acknowledgment is received, it returns an
+    /// `InstrumentError::NotAcknowledged` error with the incorrect response received in the error
+    /// message.
     ///
     /// # Arguments:
-    /// - `_cmd` - A string slice that will be sent to the instrument.
-    fn sendcmd(&mut self, _cmd: &str) -> Result<(), InstrumentError> {
-        Err(InstrumentError::InterfaceCommandNotSupported)
+    /// - `_ack` - A string slice that contains the expected acknowledgment response.
+    fn check_acknowledgment(&mut self, ack: &str) -> Result<(), InstrumentError> {
+        let response = self.read_until_terminator()?;
+        if response == ack {
+            Ok(())
+        } else {
+            Err(InstrumentError::NotAcknowledged(response))
+        }
     }
 
     /// Query the instrument with a command and return the response as a String.
@@ -154,12 +188,85 @@ pub trait InstrumentInterface {
     /// This function uses `sendcmd` to send the command and then reads the response character by
     /// character until the response string ends with the terminator. If no terminator is
     /// encountered, the function will block until the timeout is reached. If a non-UTF-8 byte is
-    /// received, an error is printed to stderr and the byte is skipped.
+    /// received, an error is printed to `stderr` and the byte is skipped.
+    ///
+    /// This function has a default implementation, as it uses other interface specific methods in
+    /// order to query the instrument.
     ///
     /// # Arguments
     /// * `_cmd` - The command to send to the instrument for which we expect a response.
-    fn query(&mut self, _cmd: &str) -> Result<String, InstrumentError> {
-        Err(InstrumentError::InterfaceCommandNotSupported)
+    fn query(&mut self, cmd: &str) -> Result<String, InstrumentError> {
+        self.sendcmd(cmd)?;
+        match self.read_until_terminator() {
+            Ok(response) => Ok(response),
+            Err(InstrumentError::Timeout(tout)) => Err(InstrumentError::TimeoutQuery {
+                query: cmd.to_string(),
+                timeout: tout,
+            }),
+            e => e, // should be unreachable
+        }
+    }
+
+    /// Read an exact number of bytes from the instrument.
+    ///
+    /// You must provide a mutable buffer that this function will read into. The function will
+    /// read as many bytes as the buffer can hold.
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), InstrumentError>;
+
+    /// Read until the terminator is found or the timeout is reached.
+    ///
+    /// This function reads from the instrument until the terminator is found or the timeout is
+    /// reached and returns the read data as a String.
+    fn read_until_terminator(&mut self) -> Result<String, InstrumentError> {
+        let mut response = String::new();
+        let mut single_buf = [0u8];
+
+        let tic = Instant::now();
+        let mut timeout_occured = true;
+
+        while (Instant::now() - tic) < self.get_timeout() {
+            self.read_exact(&mut single_buf)?;
+            if let Ok(val) = str::from_utf8(&single_buf) {
+                response.push_str(val);
+            } else {
+                eprintln!("Received invalid UTF-8 data: {single_buf:?}");
+            }
+            if response.ends_with(&self.get_terminator()) {
+                timeout_occured = false;
+                break;
+            }
+        }
+
+        if timeout_occured {
+            Err(InstrumentError::Timeout(self.get_timeout()))
+        } else {
+            let retval = response.trim();
+            Ok(retval.to_string())
+        }
+    }
+
+    /// Send a command to the instrument.
+    ///
+    /// This function takes the command, appends the terminator, and writes it to the instrument.
+    /// The interface is then flushed to ensure that the command is sent immediately to the
+    /// instrument.
+    ///
+    /// This function has a default implementation, as it uses other interface specific methods in
+    /// order to query the instrument.
+    ///
+    /// # Arguments:
+    /// - `_cmd` - A string slice that will be sent to the instrument.
+    fn sendcmd(&mut self, cmd: &str) -> Result<(), InstrumentError> {
+        let cmd = format!("{}{}", cmd, self.get_terminator());
+        self.write(&cmd)
+    }
+
+    ///
+    /// Get the current terminator of the interface.
+    ///
+    /// If not implemented, this function will return a default value of `"\n"`.
+    fn get_terminator(&self) -> &str {
+        "\n"
     }
 
     /// Set the terminator of an interface from a `&str`.
@@ -167,4 +274,39 @@ pub trait InstrumentInterface {
     /// # Arguments:
     /// - `_terminator` - A string slice that will be used as the terminator for commands
     fn set_terminator(&mut self, _terminator: &str) {}
+
+    /// Get the current timeout of the interface.
+    ///
+    /// Returns the current timeout of the interface as a `Duration`. The default timeout, if not
+    /// implemented, is set to three seconds.
+    fn get_timeout(&self) -> Duration {
+        Duration::from_secs(3)
+    }
+
+    /// Set the timeout of the interface.
+    ///
+    /// The default implementation does nothing and just returns `Ok(())`.
+    ///
+    /// # Arguments:
+    /// - `_timeout` - A `Duration` that will be used as the timeout for the interface.
+    fn set_timeout(&mut self, _timeout: Duration) -> Result<(), InstrumentError> {
+        Ok(())
+    }
+
+    /// Write a string to the instrument.
+    ///
+    /// This function takes a string slice and writes it to the instrument. It does NOT append the
+    /// terminator. If you prefer a command that appends the terminator, use `sendcmd`.
+    ///
+    /// # Arguments:
+    /// - `_data` - A string slice that will be written to the instrument.
+    fn write(&mut self, data: &str) -> Result<(), InstrumentError> {
+        self.write_raw(data.as_bytes())
+    }
+
+    /// Write a byte slice to the instrument and flush it afterwards.
+    ///
+    /// This function takes a byte slice and writes it to the interface. It does NOT append the
+    /// terminator. After writing, the interface should be flushed.
+    fn write_raw(&mut self, _data: &[u8]) -> Result<(), InstrumentError>;
 }

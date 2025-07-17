@@ -1,0 +1,12 @@
+[package]
+name = "pfeiffer-tpg36x"
+version = "0.1.0"
+authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
+edition = "2024"
+
+[dependencies]
+instrumentrs    = { version = "0.1.0", path = "../../instrumentRs" }
+measurements    = { version = "0.11.0", features = ["std"] }
+
+[dev-dependencies]
+serialport = "4.7.2"

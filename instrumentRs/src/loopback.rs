@@ -1,6 +1,6 @@
 //! The loopback module provides an instrument simulator for testing purposes.
 
-use std::fmt;
+use std::{collections::VecDeque, fmt};
 
 use crate::{InstrumentError, InstrumentInterface};
 
@@ -30,6 +30,7 @@ where
     from_inst: Vec<T>,
     from_host_index: IncrIndex,
     from_inst_index: IncrIndex,
+    curr_bytes: VecDeque<u8>,
     terminator: String,
 }
 
@@ -51,11 +52,12 @@ where
             from_inst,
             from_host_index: IncrIndex::default(),
             from_inst_index: IncrIndex::default(),
+            curr_bytes: VecDeque::new(),
             terminator: "\n".to_string(), // Default terminator.
         }
     }
 
-    /// This command panics if not all commands in the LoopbackInstrument have been used.
+    /// This command panics if not all commands in the `LoopbackInstrument` have been used.
     ///
     /// You should use this command at the end of your test in order to make sure that all the
     /// input and output you provided to the `LoopbackCommunicator` have been consumed.
@@ -76,10 +78,51 @@ where
     /// interface was initialized via the `set_terminator` function.
     pub fn test_terminator(&self, expected_terminator: &str) {
         assert_eq!(
-            self.terminator, expected_terminator,
+            expected_terminator, self.terminator,
             "Expected terminator '{expected_terminator}', got '{}'",
             self.terminator
         );
+    }
+
+    /// Get the next command from host to instrument, or panic.
+    fn get_next_from_host(&mut self) -> &T {
+        self.from_host
+            .get(self.from_host_index.next())
+            .expect("No more commands were expected from host to instrument.")
+    }
+
+    /// Get the next command from instrument to host, or panic.
+    fn get_next_from_inst(&mut self) -> &T {
+        self.from_inst
+            .get(self.from_inst_index.next())
+            .expect("No more commands were expected from instrument to host.")
+    }
+
+    /// Get the next command from host to instrument as a string including the terminator.
+    fn get_next_from_host_with_terminator(&mut self) -> String {
+        let cmd = self.get_next_from_host().to_string();
+        format!("{cmd}{}", self.terminator)
+    }
+
+    /// Get the next command from instrument to host as a string including the terminator.
+    fn get_next_from_inst_with_terminator(&mut self) -> String {
+        let cmd = self.get_next_from_inst().to_string();
+        format!("{cmd}{}", self.terminator)
+    }
+
+    /// Function to read exactly one byte from the next command from the instrument.
+    ///
+    /// This just panics if there are no more commands. If there are no more commands but one is
+    /// required, the panic is justified as this is a test interface.
+    fn read_one_byte(&mut self) -> u8 {
+        match self.curr_bytes.pop_front() {
+            Some(byte) => byte,
+            None => {
+                let next_cmd = self.get_next_from_inst_with_terminator();
+                self.curr_bytes = next_cmd.as_bytes().iter().copied().collect();
+                self.read_one_byte()
+            }
+        }
     }
 }
 
@@ -87,81 +130,42 @@ impl<T> InstrumentInterface for LoopbackInterface<T>
 where
     T: AsRef<[u8]> + fmt::Display + PartialEq,
 {
-    fn sendcmd(&mut self, cmd: &str) -> Result<(), InstrumentError> {
-        let exp = self
-            .from_host
-            .get(self.from_host_index.next())
-            .expect("No more commands were expected from host to instrument.")
-            .to_string();
-        assert_eq!(
-            exp, cmd,
-            "Sendcommand mismatch: expected '{exp}', got '{cmd}'"
-        );
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), InstrumentError> {
+        for byte in buf.iter_mut() {
+            *byte = self.read_one_byte();
+        }
         Ok(())
     }
 
-    fn query(&mut self, cmd: &str) -> Result<String, InstrumentError> {
-        self.sendcmd(cmd)
-            .expect("Infallible in Loopback communicator");
-        Ok(self
-            .from_inst
-            .get(self.from_inst_index.next())
-            .expect("No more responses were expected from instrument to host.")
-            .to_string())
+    fn get_terminator(&self) -> &str {
+        self.terminator.as_str()
     }
 
     fn set_terminator(&mut self, terminator: &str) {
         self.terminator = terminator.to_string();
     }
+
+    fn write_raw(&mut self, cmd: &[u8]) -> Result<(), InstrumentError> {
+        let exp = self.get_next_from_host_with_terminator();
+        assert_eq!(
+            exp.as_bytes(),
+            cmd,
+            "Expected sendcmd '{exp}', got '{cmd:?}'"
+        );
+        Ok(())
+    }
 }
 
-// do some tests for this
+// Tests of internal functionality
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_loopback_instrument() {
-        let mut instrument = LoopbackInterface::new(vec!["CMD1", "CMD2"], vec![]);
-
-        instrument
-            .sendcmd("CMD1")
-            .expect("Infallible in Loopback communicator");
-        instrument
-            .sendcmd("CMD2")
-            .expect("Infallible in Loopback communicator");
-        instrument.finalize();
-    }
-
-    #[should_panic(expected = "Sendcommand mismatch: expected 'CMD1', got 'CMD3'")]
-    #[test]
-    fn test_loopback_instrument_mismatch() {
-        let mut instrument = LoopbackInterface::new(vec!["CMD1"], vec!["RESP1"]);
-
-        instrument
-            .sendcmd("CMD3")
-            .expect("Infallible in Loopback communicator");
-    }
-
-    #[should_panic(expected = "Leftover expected commands found from host to instrument: CMD1")]
-    #[test]
-    fn test_loopback_leftover_commands_host() {
-        let mut instrument = LoopbackInterface::new(vec!["CMD1"], vec![]);
-        instrument.finalize();
-    }
-
-    #[should_panic(expected = "Leftover expected commands found from instrument to host: RESP")]
-    #[test]
-    fn test_loopback_leftover_commands_inst() {
-        let empty_vec: Vec<&str> = vec![];
-        let mut instrument = LoopbackInterface::new(empty_vec, vec!["RESP"]);
-        instrument.finalize();
-    }
-
-    #[should_panic(expected = "Leftover expected commands found from host to instrument: CMD")]
-    #[test]
-    fn test_loopback_leftover_commands_both() {
-        let mut instrument = LoopbackInterface::new(vec!["CMD"], vec!["RESP"]);
-        instrument.finalize();
+    fn test_incrementing_index() {
+        let mut idx = IncrIndex::default();
+        assert_eq!(0, idx.next());
+        assert_eq!(1, idx.next());
+        assert_eq!(2, idx.next());
     }
 }

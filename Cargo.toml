@@ -3,4 +3,4 @@ resolver = "3"
 package.version = "0.1.0"
 package.authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
 package.edition = "2024"
-members = ["instrumentRs", "other/digoutbox"]
+members = ["instrumentRs", "other/digoutbox", "pfeiffer/tpg36x"]
