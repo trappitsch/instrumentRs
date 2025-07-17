@@ -1,0 +1,11 @@
+[package]
+name = "digoutbox"
+version = "0.1.0"
+authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
+edition = "2024"
+
+[dependencies]
+instrumentrs    = { version = "0.1.0", path = "../../instrumentRs" }
+
+[dev-dependencies]
+serialport = "4.7.2"

@@ -14,10 +14,10 @@ fn main() {
     // Now we can open the DigOutBox with the serial interface.
     let mut inst = DigOutBox::new(interface);
 
-    // query and print the name of the instrument
+    // Query and print the name of the instrument
     println!("Instrument name: {}", inst.get_name().unwrap());
 
-    // set outputs of channels 0 to 9 to to true
+    // set outputs of channels 0 to 9 to true
     for i in 0..10 {
         let mut channel = inst.get_channel(i).unwrap();
         channel.set_output(true).unwrap();
@@ -33,7 +33,7 @@ fn main() {
         ch7.get_output().unwrap()
     );
 
-    // Print the status of all outputs as a vector of booleans
+    // Print the status of all outputs as a vector of boolean values
     println!(
         "All output are set do: {:?}",
         inst.get_all_outputs().unwrap()
