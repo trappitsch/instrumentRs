@@ -1,5 +1,7 @@
 //! Module to handle instrument specific units and conversions.
 
+use std::fmt::Display;
+
 use measurements::{Pressure, Voltage};
 
 /// Since the TPG36x can return either a pressure or a voltage measurement, we return an enum for
@@ -10,6 +12,15 @@ pub enum Tpg36xMeasurement {
     Pressure(Pressure),
     /// Measurement in voltage units.
     Voltage(Voltage),
+}
+
+impl Display for Tpg36xMeasurement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tpg36xMeasurement::Pressure(p) => write!(f, "{p}"),
+            Tpg36xMeasurement::Voltage(v) => write!(f, "{v}"),
+        }
+    }
 }
 
 /// All the units the TPG36x can be configured to use.
@@ -58,6 +69,19 @@ impl PressureUnit {
             _ => Err(instrumentrs::InstrumentError::ResponseParseError(
                 value.to_string(),
             )),
+        }
+    }
+}
+
+impl Display for PressureUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PressureUnit::mBar => write!(f, "mBar"),
+            PressureUnit::Torr => write!(f, "Torr"),
+            PressureUnit::Pa => write!(f, "Pa"),
+            PressureUnit::mTorr => write!(f, "mTorr"),
+            PressureUnit::hPa => write!(f, "hPa"),
+            PressureUnit::V => write!(f, "V"),
         }
     }
 }

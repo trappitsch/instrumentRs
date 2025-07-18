@@ -7,10 +7,10 @@
 //!
 //! # Currently implemented interfaces are:
 //! - Serial (blocking) using the [`serialport`] crate.
+//! - TCP/IP (blocking) using the [`std::net`] module.
 //!
-//! We are planning to soon also support the following interfaces:
+//! We are planning in the future to also support the following interfaces:
 //! - Async serial
-//! - TCP/IP blocking
 //! - TCP/IP async
 //!
 //! # Goals and non-goals of this project
@@ -33,8 +33,8 @@
 //! # Inspiration
 //!
 //! This project is heavily inspired by the fantastic
-//! [`instrumentkit`](https://github.com/instrumentkit/InstrumentKit) library that allows for
-//! instrument control from python.
+//! [`instrumentkit`](https://github.com/instrumentkit/InstrumentKit) library that allows to
+//! control instruments from Python.
 //!
 //! # Status
 //!
@@ -46,7 +46,7 @@
 //! # License
 //!
 //!
-//! Licensed under either of
+//! Licensed under either
 //!
 //! - Apache License, Version 2.0 ([LICENSE-APACHE](http://www.apache.org/licenses/LICENSE-2.0))
 //! - MIT license ([LICENSE-MIT](http://opensource.org/licenses/MIT))

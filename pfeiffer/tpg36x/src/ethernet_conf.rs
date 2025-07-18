@@ -1,11 +1,11 @@
 //! Ethernet configuration for the TPG36x.
 
-use std::net::Ipv4Addr;
+use std::{fmt::Display, net::Ipv4Addr};
 
 use instrumentrs::InstrumentError;
 
 /// An enum for the DHCP configuration.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum DhcpConfig {
     Static,
     Dynamic,
@@ -17,6 +17,15 @@ impl DhcpConfig {
         match self {
             DhcpConfig::Static => "0",
             DhcpConfig::Dynamic => "1",
+        }
+    }
+}
+
+impl Display for DhcpConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DhcpConfig::Static => write!(f, "Static"),
+            DhcpConfig::Dynamic => write!(f, "Dynamic"),
         }
     }
 }
@@ -40,7 +49,7 @@ impl TryFrom<&str> for DhcpConfig {
 /// Ethernet configuration for the TPG36x.
 ///
 /// All IPs must be defined as IPv4 addresses, as this is the only supported protocol.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EthernetConfig {
     dhcp_conf: DhcpConfig,
     ip: Option<Ipv4Addr>,
@@ -113,5 +122,26 @@ impl EthernetConfig {
                 self.gateway.expect("This should be infallible.")
             ),
         }
+    }
+}
+
+impl Display for EthernetConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ret_str = format!("DHCP config: {}\n", self.dhcp_conf);
+        if let Some(ip) = self.ip {
+            ret_str.push_str("IP Adress: ");
+            ret_str.push_str(&ip.to_string());
+            ret_str.push('\n');
+        }
+        if let Some(subnet) = self.subnet_mask {
+            ret_str.push_str("Subnet mask: ");
+            ret_str.push_str(&subnet.to_string());
+            ret_str.push('\n');
+        }
+        if let Some(gateway) = self.gateway {
+            ret_str.push_str("Gateway: ");
+            ret_str.push_str(&gateway.to_string());
+        }
+        write!(f, "{ret_str}")
     }
 }

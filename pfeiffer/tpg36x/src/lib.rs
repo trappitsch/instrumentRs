@@ -14,6 +14,7 @@ mod status;
 mod units;
 
 pub use ethernet_conf::EthernetConfig;
+pub use status::SensorStatus;
 pub use units::{PressureUnit, Tpg36xMeasurement};
 
 use std::sync::{Arc, Mutex};
@@ -103,8 +104,26 @@ impl<T: InstrumentInterface> Tpg36x<T> {
     }
 
     /// Set the number of channels for the DigOutBox.
-    pub fn set_num_channels(&mut self, num: usize) {
+    pub fn set_num_channels(&mut self, num: usize) -> Result<(), InstrumentError> {
+        if num >= 2 {
+            let num: i64 = num.try_into().unwrap_or(i64::MAX);
+            return Err(InstrumentError::IntValueOutOfRange {
+                value: num,
+                min: 0,
+                max: 1,
+            });
+        }
         self.num_channels = num;
+        Ok(())
+    }
+
+    /// Get the MAC address of the instrument.
+    ///
+    /// This returns a string that you can put into your own mac address converter if you like.
+    /// However, as this is a niche feature and MAC address handling is not in `std`, we decided
+    /// to return a String instead.
+    pub fn get_mac_address(&mut self) -> Result<String, InstrumentError> {
+        self.query("MAC")
     }
 
     /// Get the current unit from the instrument.
@@ -178,7 +197,8 @@ impl<T: InstrumentInterface> Channel<T> {
     /// correct value! In this case, make sure that the `update_unit` function on the `Tpg36x`
     /// struct prior to calling this function!
     pub fn get_pressure(&mut self) -> Result<Tpg36xMeasurement, InstrumentError> {
-        let resp = self.query(&format!("PR{}", self.idx))?;
+        let resp = self.query(&format!("PR{}", self.idx + 1))?;
+        println!("Response: {resp}");
         let parts = resp.split(',').collect::<Vec<&str>>();
         if parts.len() != 2 {
             return Err(InstrumentError::ResponseParseError(resp));
@@ -199,6 +219,40 @@ impl<T: InstrumentInterface> Channel<T> {
         Ok(ret_val)
     }
 
+    /// Get the status of the channel.
+    ///
+    /// This routine returns the status of the channel, i.e., whether the channel is on, off, or in
+    /// a stat that cannot be changed.
+    pub fn get_status(&mut self) -> Result<SensorStatus, InstrumentError> {
+        let resp = self.query("SEN")?;
+        let parts = split_check_resp(&resp, 2)?;
+        // This should be infallible for two reasons:
+        // - We check the length of the vector before in the `split_check_resp` function.
+        // - If it's a one channel gauge, `self.idx = 1` cannot be accessed from the get go.
+        // So if this panics, it is a bug in the code!
+        SensorStatus::from_cmd_str(parts[self.idx])
+    }
+
+    /// Set the status of the channel.
+    ///
+    /// This routine sets the status of the channel, i.e., whether the channel should be on, off,
+    /// or left unchanged.
+    ///
+    /// Note: The manual does not specify different commands for the one or two channel models,
+    /// even though it does for other commands. We thus assume that sending two channels always is
+    /// not a problem, as the second channel on the one channel model is simply ignored. This is an
+    /// assumption, as we currently have no one channel model to test this with.
+    pub fn set_status(&mut self, status: SensorStatus) -> Result<(), InstrumentError> {
+        let mut to_send = [SensorStatus::NoChange, SensorStatus::NoChange];
+        to_send[self.idx] = status; // infallible, `self.idx` can at most be 1
+        self.sendcmd(&format!(
+            "SEN,{},{}",
+            to_send[0].to_cmd_str(),
+            to_send[1].to_cmd_str()
+        ))?;
+        Ok(())
+    }
+
     /// Get a new channel for the given instrument interface.
     ///
     /// This function can only be called from inside of the `Tpg36x` struct.
@@ -212,11 +266,9 @@ impl<T: InstrumentInterface> Channel<T> {
 
     /// Send a command for this instrument to an interface.
     fn sendcmd(&mut self, cmd: &str) -> Result<(), InstrumentError> {
-        self.interface
-            .lock()
-            .expect("Mutex should not be poisoned")
-            .sendcmd(cmd)?;
-        Ok(())
+        let mut intf = self.interface.lock().expect("Mutex should not be poisoned");
+        intf.sendcmd(cmd)?;
+        intf.check_acknowledgment("\u{6}") // check for "ACK"
     }
 
     /// Query the instrument with a command and return the response as a String.
@@ -226,6 +278,16 @@ impl<T: InstrumentInterface> Channel<T> {
         intf.write("\u{5}")?; // send "ENQ"
         intf.read_until_terminator()
     }
+}
+
+/// Split a string slice into its parts by commas, check if of correct length, and return the parts
+/// as a vector.
+fn split_check_resp(resp: &str, exp_len: usize) -> Result<Vec<&str>, InstrumentError> {
+    let parts = resp.split(',').collect::<Vec<&str>>();
+    if parts.len() != exp_len {
+        return Err(InstrumentError::ResponseParseError(resp.to_string()));
+    }
+    Ok(parts)
 }
 
 // // Tests
