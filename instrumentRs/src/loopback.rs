@@ -28,6 +28,7 @@ where
 {
     from_host: Vec<T>,
     from_inst: Vec<T>,
+    terminator_exp: String,
     from_host_index: IncrIndex,
     from_inst_index: IncrIndex,
     curr_bytes: VecDeque<u8>,
@@ -46,21 +47,23 @@ where
     /// # Arguments:
     /// * `from_host` - Commands from host to instrument.
     /// * `from_inst` - Commands from instrument to host.
-    pub fn new(from_host: Vec<T>, from_inst: Vec<T>) -> Self {
+    /// * `terminator_exp` - The expected terminator.
+    pub fn new(from_host: Vec<T>, from_inst: Vec<T>, terminator_exp: &str) -> Self {
         LoopbackInterface {
             from_host,
             from_inst,
+            terminator_exp: terminator_exp.to_string(), // the expected terminator
             from_host_index: IncrIndex::default(),
             from_inst_index: IncrIndex::default(),
             curr_bytes: VecDeque::new(),
-            terminator: "\n".to_string(), // Default terminator.
+            terminator: "\n".to_string(), // default terminator, as interfaces
         }
     }
 
     /// This command panics if not all commands in the `LoopbackInstrument` have been used.
     ///
-    /// You should use this command at the end of your test in order to make sure that all the
-    /// input and output you provided to the `LoopbackCommunicator` have been consumed.
+    /// It is automatically called when the `LoopbackInstrument` is dropped, but you can also call
+    /// it manually to ensure that all commands have been used.
     pub fn finalize(&mut self) {
         let from_host_leftover = self.from_host.get(self.from_host_index.next());
         let from_inst_leftover = self.from_inst.get(self.from_inst_index.next());
@@ -70,18 +73,6 @@ where
         if let Some(fil) = from_inst_leftover {
             panic!("Leftover expected commands found from instrument to host: {fil}");
         }
-    }
-
-    /// Test the interfaces terminator and ensure the right one is set.
-    ///
-    /// The correct terminator can either be the default one or the one that is set when the
-    /// interface was initialized via the `set_terminator` function.
-    pub fn test_terminator(&self, expected_terminator: &str) {
-        assert_eq!(
-            expected_terminator, self.terminator,
-            "Expected terminator '{expected_terminator}', got '{}'",
-            self.terminator
-        );
     }
 
     /// Get the next command from host to instrument, or panic.
@@ -101,13 +92,13 @@ where
     /// Get the next command from host to instrument as a string including the terminator.
     fn get_next_from_host_with_terminator(&mut self) -> String {
         let cmd = self.get_next_from_host().to_string();
-        format!("{cmd}{}", self.terminator)
+        format!("{cmd}{}", self.terminator_exp)
     }
 
     /// Get the next command from instrument to host as a string including the terminator.
     fn get_next_from_inst_with_terminator(&mut self) -> String {
         let cmd = self.get_next_from_inst().to_string();
-        format!("{cmd}{}", self.terminator)
+        format!("{cmd}{}", self.terminator_exp)
     }
 
     /// Function to read exactly one byte from the next command from the instrument.
@@ -150,9 +141,17 @@ where
         assert_eq!(
             exp.as_bytes(),
             cmd,
-            "Expected sendcmd '{exp}', got '{cmd:?}'"
+            "Expected sendcmd '{0}', got '{1:?}'",
+            exp,
+            str::from_utf8(cmd)
         );
         Ok(())
+    }
+}
+
+impl<T: AsRef<[u8]> + fmt::Display + PartialEq> Drop for LoopbackInterface<T> {
+    fn drop(&mut self) {
+        self.finalize();
     }
 }
 

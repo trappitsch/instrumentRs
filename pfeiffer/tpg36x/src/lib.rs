@@ -13,7 +13,7 @@ mod ethernet_conf;
 mod status;
 mod units;
 
-pub use ethernet_conf::EthernetConfig;
+pub use ethernet_conf::{DhcpConfig, EthernetConfig};
 pub use status::SensorStatus;
 pub use units::{PressureUnit, Tpg36xMeasurement};
 
@@ -290,169 +290,38 @@ fn split_check_resp(resp: &str, exp_len: usize) -> Result<Vec<&str>, InstrumentE
     Ok(parts)
 }
 
-// // Tests
-// #[cfg(test)]
-// mod tests {
-//
-//     use std::vec;
-//
-//     use super::*;
-//     use instrumentrs::LoopbackInterface;
-//
-//     // Tests for the instrument itself.
-//
-//     #[test]
-//     fn test_terminator() {
-//         let empty_vec: Vec<&str> = Vec::new();
-//         let loopback = LoopbackInterface::new(empty_vec, vec![]);
-//         let inst = Tpg36x::new(loopback);
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .test_terminator("\n");
-//         }
-//     }
-//
-//     #[test]
-//     pub fn test_all_off() {
-//         let loopback = LoopbackInterface::new(vec!["ALLOFF"], vec![]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         inst.all_off().unwrap();
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-//
-//     #[test]
-//     fn test_get_all_outputs() {
-//         let loopback =
-//             LoopbackInterface::new(vec!["ALLDO?"], vec!["1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0"]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         assert_eq!(
-//             inst.get_all_outputs().unwrap(),
-//             vec![
-//                 true, false, true, false, true, false, true, false, true, false, true, false, true,
-//                 false, true, false
-//             ]
-//         );
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-//
-//     #[test]
-//     fn test_get_interlock_status() {
-//         let loopback = LoopbackInterface::new(vec!["INTERLOCKS?", "INTERLOCKS?"], vec!["0", "1"]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         let interlock_status = inst.get_interlock_status().unwrap();
-//         assert_eq!(interlock_status, InterlockStatus::Ready);
-//         assert!(format!("{interlock_status}").contains("is ready"));
-//
-//         let interlock_status = inst.get_interlock_status().unwrap();
-//         assert_eq!(interlock_status, InterlockStatus::Interlocked);
-//         assert!(format!("{interlock_status}").contains("is interlocked and not ready"));
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-//
-//     #[test]
-//     fn test_get_name() {
-//         let loopback = LoopbackInterface::new(vec!["*IDN?"], vec!["Inst Name"]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         assert_eq!(inst.get_name().unwrap(), "Inst Name");
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-//
-//     #[test]
-//     fn test_get_software_control_status() {
-//         let loopback = LoopbackInterface::new(vec!["SWL?", "SWL?"], vec!["0", "1"]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         let scs = inst.get_software_control_status().unwrap();
-//         assert_eq!(scs, SoftwareControlStatus::Ready);
-//         assert!(format!("{scs}").contains("Software control is possible."));
-//
-//         let scs = inst.get_software_control_status().unwrap();
-//         assert_eq!(scs, SoftwareControlStatus::LockedOut);
-//         assert!(format!("{scs}").contains("is locked out"));
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-//
-//     // Tests for the channels
-//     #[test]
-//     fn test_get_channel() {
-//         let empty_vec: Vec<&str> = Vec::new();
-//         let loopback = LoopbackInterface::new(empty_vec, vec![]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         // Get a channel and check if it is created correctly
-//         let channel = inst.get_channel(0).unwrap();
-//         assert_eq!(channel.idx, 0);
-//
-//         // Try to get a channel that is out of range
-//         match inst.get_channel(17) {
-//             Err(InstrumentError::ChannelIndexOutOfRange { idx, nof_channels }) => {
-//                 assert_eq!(idx, 17);
-//                 assert_eq!(nof_channels, 16);
-//             }
-//             _ => panic!("Expected ChannelIndexOutOfRange error"),
-//         }
-//
-//         // Now set the box up so it has only 6 channels
-//         inst.set_num_channels(6);
-//         // Try to get a channel that is out of range
-//         assert!(inst.get_channel(6).is_err());
-//     }
-//
-//     #[test]
-//     fn test_channel_output() {
-//         let loopback =
-//             LoopbackInterface::new(vec!["DO0 1", "DO0?", "DO1 0", "DO1?"], vec!["1", "0"]);
-//         let mut inst = Tpg36x::new(loopback);
-//
-//         let mut ch0 = inst.get_channel(0).unwrap();
-//         ch0.set_output(true).unwrap();
-//         assert!(ch0.get_output().unwrap());
-//
-//         let mut ch1 = inst.get_channel(1).unwrap();
-//         ch1.set_output(false).unwrap();
-//         assert!(!ch1.get_output().unwrap());
-//
-//         {
-//             inst.interface
-//                 .lock()
-//                 .expect("Mutex should not be poisoned")
-//                 .finalize();
-//         }
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::*;
+
+    /// Ensure that the split really splits by commas and checks the length.
+    #[rstest]
+    fn test_split_check_resp() {
+        let resp = "part1,part2,part3";
+        let parts = split_check_resp(resp, 3).unwrap();
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[0], "part1");
+        assert_eq!(parts[1], "part2");
+        assert_eq!(parts[2], "part3");
+
+        // Test with incorrect length
+        assert!(split_check_resp(resp, 2).is_err());
+        assert!(split_check_resp(resp, 4).is_err());
+    }
+
+    /// Ensure that any response without comma returns one part, which is the response itself.
+    #[rstest]
+    #[case("")]
+    #[case("asdf")]
+    fn test_split_check_resp_empty(#[case] resp: &str) {
+        let parts = split_check_resp(resp, 1).unwrap();
+
+        assert_eq!(parts.len(), 1);
+        assert_eq!(parts[0], resp);
+
+        // Test with incorrect length
+        assert!(split_check_resp(resp, 0).is_err());
+        assert!(split_check_resp(resp, 2).is_err());
+    }
+}

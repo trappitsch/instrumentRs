@@ -11,7 +11,7 @@ fn crt_lbk<T: AsRef<[u8]> + Display + PartialEq>(
     input: Vec<T>,
     output: Vec<T>,
 ) -> LoopbackInterface<T> {
-    LoopbackInterface::new(input, output)
+    LoopbackInterface::new(input, output, "\n")
 }
 
 /// Create a loopback interface that contains no commands.
@@ -26,7 +26,6 @@ fn check_acknowledgment() {
     let mut lbk = crt_lbk(vec!["cmd1"], vec!["ACK"]);
     lbk.sendcmd("cmd1").unwrap();
     lbk.check_acknowledgment("ACK").unwrap();
-    lbk.finalize();
 }
 
 /// Ensure that acknowledgment fails if command is not acknowledged.
@@ -37,20 +36,25 @@ fn check_acknowledgment_fail() {
 }
 
 /// Ensure `finalize` method passes if an empty loopback interface is used.
+///
+/// This routine calls the finalize method manually, however, it is not necessary to do so as it is
+/// implemented in the `Drop` trait for `LoopbackInterface`.
 #[rstest]
 fn finalize_test(mut emp_lbk: LoopbackInterface<String>) {
     emp_lbk.finalize();
 }
 
 /// Ensure `finalize` method panics if comma's are left in the loopback interface.
+///
+/// Note that the finalize method is called in the `Drop` trait, so it is not necessary to call it
+/// directly.
 #[rstest]
 #[case(vec!["cmd"], vec![])]
 #[case(vec![], vec!["resp"])]
 #[case(vec!["cmd"], vec!["resp"])]
 #[should_panic]
 fn finalize_test_panic(#[case] from_host: Vec<&str>, #[case] from_inst: Vec<&str>) {
-    let mut lbk = crt_lbk(from_host, from_inst);
-    lbk.finalize();
+    let _ = crt_lbk(from_host, from_inst);
 }
 
 #[rstest]
@@ -58,7 +62,6 @@ fn sendcmd() {
     let mut lbk = crt_lbk(vec!["cmd1", "cmd2"], vec![]);
     lbk.sendcmd("cmd1").unwrap();
     lbk.sendcmd("cmd2").unwrap();
-    lbk.finalize();
 }
 
 #[rstest]
@@ -69,24 +72,10 @@ fn sendcmd_mismatch() {
 }
 
 #[rstest]
-fn terminator(mut emp_lbk: LoopbackInterface<String>) {
-    emp_lbk.test_terminator("\n");
-    emp_lbk.set_terminator("\r\n");
-    emp_lbk.test_terminator("\r\n");
-}
-
-#[rstest]
-#[should_panic]
-fn terminator_wrong(emp_lbk: LoopbackInterface<String>) {
-    emp_lbk.test_terminator("\r\n");
-}
-
-#[rstest]
 fn query() {
     let mut lbk = crt_lbk(vec!["cmd1", "cmd2"], vec!["resp1", "resp2"]);
     let resp1 = lbk.query("cmd1").unwrap();
     assert_eq!(resp1, "resp1");
     let resp2 = lbk.query("cmd2").unwrap();
     assert_eq!(resp2, "resp2");
-    lbk.finalize();
 }

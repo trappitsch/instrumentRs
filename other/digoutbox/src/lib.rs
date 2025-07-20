@@ -258,23 +258,9 @@ mod tests {
     use instrumentrs::LoopbackInterface;
 
     // Tests for the instrument itself.
-
-    #[test]
-    fn test_terminator() {
-        let empty_vec: Vec<&str> = Vec::new();
-        let loopback = LoopbackInterface::new(empty_vec, vec![]);
-        let inst = DigOutBox::new(loopback);
-        {
-            inst.interface
-                .lock()
-                .expect("Mutex should not be poisoned")
-                .test_terminator("\n");
-        }
-    }
-
     #[test]
     pub fn test_all_off() {
-        let loopback = LoopbackInterface::new(vec!["ALLOFF"], vec![]);
+        let loopback = LoopbackInterface::new(vec!["ALLOFF"], vec![], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         inst.all_off().unwrap();
@@ -289,8 +275,11 @@ mod tests {
 
     #[test]
     fn test_get_all_outputs() {
-        let loopback =
-            LoopbackInterface::new(vec!["ALLDO?"], vec!["1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0"]);
+        let loopback = LoopbackInterface::new(
+            vec!["ALLDO?"],
+            vec!["1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0"],
+            "\n",
+        );
         let mut inst = DigOutBox::new(loopback);
 
         assert_eq!(
@@ -311,7 +300,8 @@ mod tests {
 
     #[test]
     fn test_get_interlock_status() {
-        let loopback = LoopbackInterface::new(vec!["INTERLOCKS?", "INTERLOCKS?"], vec!["0", "1"]);
+        let loopback =
+            LoopbackInterface::new(vec!["INTERLOCKS?", "INTERLOCKS?"], vec!["0", "1"], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         let interlock_status = inst.get_interlock_status().unwrap();
@@ -332,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_get_name() {
-        let loopback = LoopbackInterface::new(vec!["*IDN?"], vec!["Inst Name"]);
+        let loopback = LoopbackInterface::new(vec!["*IDN?"], vec!["Inst Name"], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         assert_eq!(inst.get_name().unwrap(), "Inst Name");
@@ -347,7 +337,7 @@ mod tests {
 
     #[test]
     fn test_get_software_control_status() {
-        let loopback = LoopbackInterface::new(vec!["SWL?", "SWL?"], vec!["0", "1"]);
+        let loopback = LoopbackInterface::new(vec!["SWL?", "SWL?"], vec!["0", "1"], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         let scs = inst.get_software_control_status().unwrap();
@@ -370,7 +360,7 @@ mod tests {
     #[test]
     fn test_get_channel() {
         let empty_vec: Vec<&str> = Vec::new();
-        let loopback = LoopbackInterface::new(empty_vec, vec![]);
+        let loopback = LoopbackInterface::new(empty_vec, vec![], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         // Get a channel and check if it is created correctly
@@ -395,7 +385,7 @@ mod tests {
     #[test]
     fn test_channel_output() {
         let loopback =
-            LoopbackInterface::new(vec!["DO0 1", "DO0?", "DO1 0", "DO1?"], vec!["1", "0"]);
+            LoopbackInterface::new(vec!["DO0 1", "DO0?", "DO1 0", "DO1?"], vec!["1", "0"], "\n");
         let mut inst = DigOutBox::new(loopback);
 
         let mut ch0 = inst.get_channel(0).unwrap();

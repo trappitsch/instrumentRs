@@ -6,8 +6,10 @@ use instrumentrs::InstrumentError;
 
 /// An enum for the DHCP configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum DhcpConfig {
+pub enum DhcpConfig {
+    /// Static DHCP configuration
     Static,
+    /// Dynamic DHCP configuration
     Dynamic,
 }
 
@@ -51,10 +53,14 @@ impl TryFrom<&str> for DhcpConfig {
 /// All IPs must be defined as IPv4 addresses, as this is the only supported protocol.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EthernetConfig {
-    dhcp_conf: DhcpConfig,
-    ip: Option<Ipv4Addr>,
-    subnet_mask: Option<Ipv4Addr>,
-    gateway: Option<Ipv4Addr>,
+    /// The DHCP configuration.
+    pub dhcp_conf: DhcpConfig,
+    /// IP address.
+    pub ip: Option<Ipv4Addr>,
+    /// Subnet mask address.
+    pub subnet_mask: Option<Ipv4Addr>,
+    /// Gateway address.
+    pub gateway: Option<Ipv4Addr>,
 }
 
 impl EthernetConfig {
@@ -92,21 +98,24 @@ impl EthernetConfig {
         if parts.len() != 4 {
             return Err(InstrumentError::ResponseParseError(value.to_string()));
         }
+        let ip = parts[1]
+            .parse::<Ipv4Addr>()
+            .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
+        let subnet_mask = parts[2]
+            .parse::<Ipv4Addr>()
+            .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
+        let gateway = parts[3]
+            .parse::<Ipv4Addr>()
+            .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
         let dhcp_conf = DhcpConfig::try_from(parts[0])?;
         match dhcp_conf {
-            DhcpConfig::Dynamic => Ok(EthernetConfig::new_dynamic()),
-            DhcpConfig::Static => {
-                let ip = parts[1]
-                    .parse::<Ipv4Addr>()
-                    .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
-                let subnet_mask = parts[2]
-                    .parse::<Ipv4Addr>()
-                    .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
-                let gateway = parts[3]
-                    .parse::<Ipv4Addr>()
-                    .map_err(|_| InstrumentError::ResponseParseError(value.to_string()))?;
-                Ok(EthernetConfig::new_static(ip, subnet_mask, gateway))
-            }
+            DhcpConfig::Dynamic => Ok(EthernetConfig {
+                dhcp_conf: DhcpConfig::Dynamic,
+                ip: Some(ip),
+                subnet_mask: Some(subnet_mask),
+                gateway: Some(gateway),
+            }),
+            DhcpConfig::Static => Ok(EthernetConfig::new_static(ip, subnet_mask, gateway)),
         }
     }
 
