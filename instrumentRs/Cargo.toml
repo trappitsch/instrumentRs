@@ -1,8 +1,14 @@
 [package]
 name = "instrumentrs"
 version = "0.1.0"
+authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
 edition = "2024"
 
 [dependencies]
 thiserror       = "2.0.12"
 serialport      = "4.7.2"
+
+[dev-dependencies]
+mockall         = "0.13.1"
+proptest        = "1.7.0"
+rstest          = "0.25.0"
