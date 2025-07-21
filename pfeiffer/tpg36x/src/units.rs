@@ -101,3 +101,43 @@ pub(crate) fn from_value_unit(value: f64, unit: &PressureUnit) -> Tpg36xMeasurem
         PressureUnit::V => Tpg36xMeasurement::Voltage(Voltage::from_volts(value)),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use measurements::{Measurement, test_utils::almost_eq};
+    use rstest::*;
+
+    #[rstest]
+    #[case(1000.0, PressureUnit::mBar, Pressure::from_millibars(1000.0))]
+    #[case(1000.0, PressureUnit::Torr, Pressure::from_pascals(1000.0 * 133.3224))]
+    #[case(1000.0, PressureUnit::Pa, Pressure::from_pascals(1000.0))]
+    #[case(1000.0, PressureUnit::mTorr, Pressure::from_pascals(1000.0 * 133322.4))]
+    #[case(1000.0, PressureUnit::hPa, Pressure::from_pascals(1000.0 * 100.0))]
+    fn test_from_value_unit_pressure(
+        #[case] value: f64,
+        #[case] unit: PressureUnit,
+        #[case] expected: Pressure,
+    ) {
+        let measurement = from_value_unit(value, &unit);
+        if let Tpg36xMeasurement::Pressure(pressure) = measurement {
+            almost_eq(expected.as_base_units(), pressure.as_base_units());
+        } else {
+            panic!("Expected a pressure measurement.");
+        }
+    }
+
+    #[rstest]
+    fn test_from_value_unit_voltage() {
+        let value = 5.0;
+        let unit = PressureUnit::V;
+        let expected = Voltage::from_volts(value);
+        let measurement = from_value_unit(value, &unit);
+
+        if let Tpg36xMeasurement::Voltage(voltage) = measurement {
+            almost_eq(expected.as_base_units(), voltage.as_base_units());
+        } else {
+            panic!("Expected a voltage measurement.");
+        }
+    }
+}

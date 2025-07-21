@@ -2,11 +2,14 @@
 
 use std::net::Ipv4Addr;
 
+use measurements::{Measurement, test_utils::almost_eq};
 use rstest::*;
 
 use instrumentrs::LoopbackInterface;
 
-use pfeiffer_tpg36x::{DhcpConfig, EthernetConfig, Tpg36x};
+use pfeiffer_tpg36x::{
+    DhcpConfig, EthernetConfig, PressureUnit, SensorStatus, Tpg36x, Tpg36xMeasurement,
+};
 
 type Tpg36Lbk = Tpg36x<LoopbackInterface<String>>;
 
@@ -111,6 +114,36 @@ fn test_ethernet_config() {
     assert_eq!(Ipv4Addr::new(10, 11, 12, 13), conf2.ip.unwrap());
     assert_eq!(Ipv4Addr::new(20, 30, 40, 50), conf2.subnet_mask.unwrap());
     assert_eq!(Ipv4Addr::new(60, 70, 80, 90), conf2.gateway.unwrap());
+
+    // ensure that Display is implemented
+    let _ = conf2.to_string();
+}
+
+/// Get the MAC address of the instrument.
+#[rstest]
+fn test_get_mac_address() {
+    let mut inst = crt_inst(vec!["MAC", ENQ], vec![ACK, "00:11:22:33:44:55"]);
+    assert_eq!("00:11:22:33:44:55", inst.get_mac_address().unwrap());
+}
+
+/// Get/set the unit of the instrument.
+#[rstest]
+#[case(0, PressureUnit::mBar)]
+#[case(1, PressureUnit::Torr)]
+#[case(2, PressureUnit::Pa)]
+#[case(3, PressureUnit::mTorr)]
+#[case(4, PressureUnit::hPa)]
+#[case(5, PressureUnit::V)]
+fn test_get_set_unit(#[case] numb: usize, #[case] unit: PressureUnit) {
+    let mut inst = crt_inst(
+        vec![&format!("UNI,{numb}"), "UNI", ENQ],
+        vec![ACK, ACK, &format!("{numb}")],
+    );
+    inst.set_unit(unit).unwrap();
+    assert_eq!(inst.get_unit().unwrap(), unit);
+
+    // ensure that Display is implemented
+    let _ = unit.to_string();
 }
 
 /// Get the name of the unit.
@@ -119,3 +152,76 @@ fn test_get_name() {
     let mut inst = crt_inst(vec!["AYT", ENQ], vec![ACK, "ASDF1234"]);
     assert_eq!("ASDF1234", inst.get_name().unwrap());
 }
+
+/// Get the pressure of each gauge.
+#[rstest]
+#[case(0, 1.2E-5)]
+#[case(1, 2.3E-3)]
+fn test_get_pressure(#[case] channel: usize, #[case] pressure: f64) {
+    let mut inst = crt_inst(
+        vec![&format!("PR{}", channel + 1), ENQ],
+        vec![ACK, &format!("0,{pressure:.3E}")],
+    );
+    let mut ch = inst.get_channel(channel).unwrap();
+    let val = ch.get_pressure().unwrap();
+
+    let exp = measurements::Pressure::from_pascals(pressure);
+    if let Tpg36xMeasurement::Pressure(pressure) = val {
+        almost_eq(exp.as_base_units(), pressure.as_base_units());
+    } else {
+        panic!("Expect a pressure and not voltage measurement.");
+    }
+
+    let _ = val.to_string(); // Ensure Display is implemented
+}
+
+/// Throw an error if the return value is malformatted.
+#[rstest]
+fn test_get_pressure_wrong_length() {
+    let mut inst = crt_inst(vec!["PR1", ENQ], vec![ACK, "0,1.2E-5,"]);
+    let mut ch = inst.get_channel(0).unwrap();
+    assert!(ch.get_pressure().is_err());
+}
+
+/// Throw an error if the status code is not 0.
+#[rstest]
+#[case(1, "Underrange")]
+#[case(2, "Overrange")]
+#[case(3, "Sensor Error")]
+#[case(4, "Sensor Off")]
+#[case(5, "No Sensor")]
+#[case(6, "Identification Error")]
+fn test_get_pressure_status_error(#[case] status: usize, #[case] status_str: &str) {
+    let mut inst = crt_inst(vec!["PR1", ENQ], vec![ACK, &format!("{status},1.2E-5")]);
+    let mut ch = inst.get_channel(0).unwrap();
+    let val = ch.get_pressure();
+    if let Err(e) = val {
+        assert!(e.to_string().contains(status_str));
+    } else {
+        panic!("Expected an error, but got a value.");
+    }
+}
+
+/// Get the status of a sensor.
+#[rstest]
+fn test_get_sensor_status() {
+    let mut inst = crt_inst(
+        vec!["SEN", ENQ, "SEN,0,1", "SEN,2,0"],
+        vec![ACK, "0,1", ACK, ACK],
+    );
+    let mut ch1 = inst.get_channel(0).unwrap();
+    let val = ch1.get_status().unwrap();
+    assert_eq!(val, SensorStatus::NoChange);
+
+    // ensure that Display is implemented
+    let _ = val.to_string();
+
+    // set sensor 2 to off (leave sensor 1 unchanged).
+    let mut ch2 = inst.get_channel(1).unwrap();
+    ch2.set_status(SensorStatus::Off).unwrap();
+    // Turn gauge 1 on.
+    ch1.set_status(SensorStatus::On).unwrap();
+}
+
+// TODO: Add channel tests, then commit to see progress.
+// Then go and refractor all the digoutbox tests with some fixutres and good stuff
