@@ -73,7 +73,7 @@ fn test_get_software_control_status() {
 #[rstest]
 fn test_get_channel(mut emp_inst: DigOutBox<LoopbackInterface<String>>) {
     // Get a channel and check if it is created correctly
-    let channel = emp_inst.get_channel(0).unwrap();
+    let _ = emp_inst.get_channel(0).unwrap();
 
     // Try to get a channel that is out of range
     match emp_inst.get_channel(17) {
