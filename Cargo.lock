@@ -77,6 +77,7 @@ name = "digoutbox"
 version = "0.1.0"
 dependencies = [
  "instrumentrs",
+ "rstest",
  "serialport",
 ]
 

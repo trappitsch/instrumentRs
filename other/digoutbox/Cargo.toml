@@ -8,4 +8,5 @@ edition = "2024"
 instrumentrs    = { version = "0.1.0", path = "../../instrumentRs" }
 
 [dev-dependencies]
+rstest = "0.25.0"
 serialport = "4.7.2"
