@@ -135,7 +135,7 @@ pub trait InstrumentInterface {
                 query: cmd.to_string(),
                 timeout: tout,
             }),
-            e => e, // should be unreachable
+            Err(e) => Err(e),
         }
     }
 
@@ -161,7 +161,9 @@ pub trait InstrumentInterface {
             if let Ok(val) = str::from_utf8(&single_buf) {
                 response.push_str(val);
             } else {
-                eprintln!("Received invalid UTF-8 data: {single_buf:?}");
+                panic!(
+                    "Received invalid UTF-8 data: {single_buf:?}. This should be unreachable, as read exact always returns a `u8`. Please report this as a bug."
+                );
             }
             if response.ends_with(&self.get_terminator()) {
                 timeout_occured = false;
