@@ -3,15 +3,14 @@
 //! The InstrumentRs library provides standardized interfaces to talk to scientific equipment via
 //! various different ports. To do so, it provides an `InstrumentInterface` trait and its
 //! implementations. Furthermore, we also provide an `InstrumentError` error type that instrument
-//! drivers should return.
+//! drivers should return. Any connection type that implements the `std::io::Read` and
+//! `std::io::Write` traits can be used as an instrument interface. Furthermore, we also provide
+//! simplified access to the following interfaces:
 //!
-//! # Currently implemented interfaces are:
-//! - Serial (blocking) using the [`serialport`] crate.
 //! - TCP/IP (blocking) using the [`std::net`] module.
+//! - Serial (blocking) using the [`serialport`] crate (feature `"serial"`).
 //!
-//! We are planning in the future to also support the following interfaces:
-//! - Async serial
-//! - TCP/IP async
+//! We are planning in the future to also support asynchronous interfaces.
 //!
 //! # Goals and non-goals of this project
 //!
@@ -70,8 +69,10 @@ use std::time::{Duration, Instant};
 
 pub use instrument::{Instrument, InstrumentError};
 pub use loopback::LoopbackInterface;
-pub use serial::SerialInstrument;
-pub use tcp_ip::TcpIpInstrument;
+pub use tcp_ip::TcpIpInterface;
+
+#[cfg(feature = "serial")]
+pub use serial::SerialInterface;
 
 /// The `InstrumentInterface` trait defines the interface for controlling instruments.
 ///

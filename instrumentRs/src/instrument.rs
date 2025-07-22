@@ -117,6 +117,7 @@ pub enum InstrumentError {
     /// contains the response that was received from the instrument.
     #[error("Response from instrument could not be parsed. Response was: {0}")]
     ResponseParseError(String),
+    #[cfg(feature = "serial")]
     /// Serial port errors can occur when opening a serial interface. See the [`serialport::Error`]
     /// documentation for more information.
     #[error(transparent)]

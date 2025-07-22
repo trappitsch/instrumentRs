@@ -6,9 +6,12 @@ edition = "2024"
 
 [dependencies]
 thiserror       = "2.0.12"
-serialport      = "4.7.2"
+serialport      = { version = "4.7.2", optional = true }
 
 [dev-dependencies]
 mockall         = "0.13.1"
 proptest        = "1.7.0"
 rstest          = "0.25.0"
+
+[features]
+serial = ["serialport"]

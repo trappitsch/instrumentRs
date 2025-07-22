@@ -1,18 +1,18 @@
-use std::{net::Ipv4Addr, time::Duration};
+use std::net::Ipv4Addr;
 
-use instrumentrs::SerialInstrument;
+use instrumentrs::SerialInterface;
 
 use pfeiffer_tpg36x::{EthernetConfig, Tpg36x};
 
 fn main() {
-    // Create a serial port builder using the `serialport::new` function.
-    let spb = serialport::new("/dev/ttyUSB0", 9600).timeout(Duration::from_secs(3));
+    let port = "/dev/ttyUSB0";
+    let baud = 9600;
 
-    // Define the serial interface using the serial port builder object.
-    let interface = SerialInstrument::try_new(spb).expect("Instrument must be available.");
+    // Define the serial instrument interface using the `simple` method.
+    let serial_inst = SerialInterface::simple(port, baud).expect("Failed to open serial port");
 
-    // Now we can open the DigOutBox with the serial interface.
-    let mut inst = Tpg36x::try_new(interface).unwrap();
+    // Now we can open the TPG36x with the serial interface.
+    let mut inst = Tpg36x::try_new(serial_inst).unwrap();
 
     // Query and print the name of the instrument
     println!("Instrument name: {}", inst.get_name().unwrap());

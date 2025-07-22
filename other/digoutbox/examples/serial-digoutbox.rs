@@ -1,18 +1,17 @@
-use std::time::Duration;
-
-use instrumentrs::SerialInstrument;
+use instrumentrs::SerialInterface;
 
 use digoutbox::DigOutBox;
 
 fn main() {
     // Create a serial port builder using the `serialport::new` function.
-    let spb = serialport::new("/dev/ttyACM0", 9600).timeout(Duration::from_secs(3));
+    let port = "/dev/ttyACM0";
+    let baud = 9600;
 
-    // Define the serial interface using the serial port builder object.
-    let interface = SerialInstrument::try_new(spb).expect("Instrument must be available.");
+    // Let us get an instrument with the serial interface.
+    let serial_inst = SerialInterface::simple(port, baud).expect("Failed to open serial port");
 
-    // Now we can open the DigOutBox with the serial interface.
-    let mut inst = DigOutBox::new(interface);
+    // Now we can open the DigOutBox with the serial instrument.
+    let mut inst = DigOutBox::new(serial_inst);
 
     // Query and print the name of the instrument
     println!("Instrument name: {}", inst.get_name().unwrap());

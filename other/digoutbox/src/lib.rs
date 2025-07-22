@@ -81,18 +81,18 @@ impl From<&str> for SoftwareControlStatus {
 /// available as `/dev/ttyACM0`, you could initialize this driver as following.
 ///
 /// ```no_run
-/// use std::time::Duration;
-/// use instrumentrs::SerialInstrument;
+/// use instrumentrs::SerialInterface;
 /// use digoutbox::DigOutBox;
 ///
-/// let spb = serialport::new("/dev/ttyACM0", 9600).timeout(Duration::from_secs(3));
-/// let interface = SerialInstrument::try_new(spb).unwrap();
-/// let mut inst = DigOutBox::new(interface);
+/// let port = "/dev/ttyACM0";
+/// let baud = 9600;
+/// let inst_interface = SerialInterface::simple(port, baud).unwrap();
+/// let mut inst = DigOutBox::new(inst_interface);
 ///
 /// println!("Instrument name: {}", inst.get_name().unwrap());
 /// ```
 ///
-/// This would print the name, harware, and software version of the instrument to stdout.
+/// This would print the name, hardware, and software version of the instrument to `stdout`.
 pub struct DigOutBox<T: InstrumentInterface> {
     interface: Arc<Mutex<T>>,
     num_channels: usize,

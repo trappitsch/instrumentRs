@@ -1,13 +1,13 @@
-use instrumentrs::TcpIpInstrument;
+use instrumentrs::TcpIpInterface;
 
 use pfeiffer_tpg36x::{PressureUnit, SensorStatus, Tpg36x, Tpg36xMeasurement};
 
 fn main() {
-    // Define the serial interface using TcpIpInstrument.
-    let interface = TcpIpInstrument::try_new("192.168.127.42:8000").unwrap();
+    // Define the TCP/IP instrument interface using `TcpIpInterface`.
+    let tcpip_inst = TcpIpInterface::simple("192.168.127.42:8000").unwrap();
 
-    // Now we can open the Pfeiffer TPG36x with the TcpIpInstrument interface.
-    let mut inst = Tpg36x::try_new(interface).unwrap();
+    // Now we can open the TPG36x with the TCP/IP instrument.
+    let mut inst = Tpg36x::try_new(tcpip_inst).unwrap();
 
     // Query and print the name of the instrument
     println!("Instrument name: {}", inst.get_name().unwrap());
@@ -21,7 +21,7 @@ fn main() {
     // get the MAC address:
     println!("MAC address: {}", inst.get_mac_address().unwrap());
 
-    // Set the unit of measurement to mbar
+    // Set the unit of measurement to millibars
     inst.set_unit(PressureUnit::mBar).unwrap();
     println!("Unit: {}", inst.get_unit().unwrap());
 

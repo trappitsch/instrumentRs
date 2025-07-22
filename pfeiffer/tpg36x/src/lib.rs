@@ -25,7 +25,24 @@ use status::PressMsrDatStat;
 
 /// A rust driver for the TPG36x.
 ///
-/// TODO
+/// This driver provides functionality to control the Pfeiffer TPG361 and TPG362 vacuum gauge
+/// controllers.
+///
+/// # Example via serial port connection
+/// ```no_run
+/// use instrumentrs::SerialInterface;
+/// use pfeiffer_tpg36x::Tpg36x;
+///
+/// let port = "/dev/ttyACM0";
+/// let baud = 9600;
+/// let inst_interface = SerialInterface::simple(port, baud).unwrap();
+/// let mut inst = Tpg36x::try_new(inst_interface).unwrap();
+///
+/// println!("Instrument name: {}", inst.get_name().unwrap());
+/// ```
+///
+/// This would print the type of unit, model number, serial number, firmware, and hardware version
+/// of the vacuum gauge controller to `stdout`.
 pub struct Tpg36x<T: InstrumentInterface> {
     interface: Arc<Mutex<T>>,
     unit: Arc<Mutex<PressureUnit>>,
@@ -35,7 +52,7 @@ pub struct Tpg36x<T: InstrumentInterface> {
 impl<T: InstrumentInterface> Tpg36x<T> {
     /// Create a new Pfeiffer TPG36x instance with the given instrument interface.
     ///
-    /// This function can fail if the instrument interface is not present, as it needs to query the
+    /// This function can fail if the instrument is not answering, as the function queries the
     /// instrument upon initialization in order to set the correct pressure unit that is currently
     /// displayed.
     ///
