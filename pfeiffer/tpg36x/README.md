@@ -1,7 +1,6 @@
-# Rust controller class for the DigOutBox
+# Pfeiffer/Inficon TPG36x
 
-This is the rust controller package for the 
-[DigOutBox](https://digoutbox.readthedocs.io/latest/) project.
+Instrument driver for the Pfeiffer/Inficon TPG36x series of vacuum gauges.
 
 To run the examples, you can use the following command:
 

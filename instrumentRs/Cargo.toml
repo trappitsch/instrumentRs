@@ -2,16 +2,17 @@
 name = "instrumentrs"
 version = "0.1.0"
 authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
-edition = "2024"
+edition.workspace = true
+license.workspace = true
+repository = "https://github.com/trappitsch/instrumentRs/tree/main/instrumentRs"
+description = "A library for standardized control of (scientific) instruments from Rust."
 
 [dependencies]
 thiserror       = "2.0.12"
-serialport      = { version = "4.7.2", optional = true }
+serialport      = { workspace = true, optional = true }
 
 [dev-dependencies]
-mockall         = "0.13.1"
-proptest        = "1.7.0"
-rstest          = "0.25.0"
+rstest          = { workspace = true }
 
 [features]
 serial = ["serialport"]

@@ -2,12 +2,15 @@
 name = "pfeiffer-tpg36x"
 version = "0.1.0"
 authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
-edition = "2024"
+edition.workspace = true
+license.workspace = true
+repository = "https://github.com/trappitsch/instrumentRs/tree/main/pfeiffer/tpg36x"
+description = "A library to control Pfeiffer/Inficon TPG36x vacuum gauges from Rust using `instrumentRs`."
 
 [dependencies]
 instrumentrs    = { version = "0.1.0", path = "../../instrumentRs", features = ["serial"] }
-measurements    = { version = "0.11.0", features = ["std"] }
+measurements    = { workspace = true, features = ["std"] }
 
 [dev-dependencies]
-serialport      = "4.7.2"
-rstest          = "0.25.0"
+serialport      = { workspace = true }
+rstest          = { workspace = true }

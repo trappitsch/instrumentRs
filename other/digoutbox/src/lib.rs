@@ -24,7 +24,7 @@
 //! inst.all_off().unwrap();
 //! ```
 
-#![warn(missing_docs)]
+#![deny(warnings, missing_docs)]
 
 use std::{
     fmt::Display,

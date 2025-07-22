@@ -7,7 +7,7 @@ use rstest::*;
 use instrumentrs::{InstrumentError, InstrumentInterface};
 
 struct TestInstrument<P: Read + Write> {
-    port: P,
+    _port: P,
     _terminator: String,
     _timeout: Duration,
 }
@@ -25,7 +25,7 @@ impl<P: Read + Write> InstrumentInterface for TestInstrument<P> {
 #[fixture]
 fn inst() -> TestInstrument<VecDeque<u8>> {
     TestInstrument {
-        port: VecDeque::new(),
+        _port: VecDeque::new(),
         _terminator: "\r\n".to_string(),
         _timeout: Duration::from_secs(0),
     }

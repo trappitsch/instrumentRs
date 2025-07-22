@@ -27,7 +27,7 @@
 //!     println!("Current pressure: {}", sensor1.get_pressure().unwrap());
 //! }
 
-#![warn(missing_docs)]
+#![deny(warnings, missing_docs)]
 
 mod ethernet_conf;
 mod status;
