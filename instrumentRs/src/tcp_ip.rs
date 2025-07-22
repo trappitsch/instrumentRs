@@ -15,11 +15,11 @@ use crate::{Instrument, InstrumentError};
 ///
 /// You have the possibility to create an instrument interface from a simple socket address, or to
 /// create a full featured TCP/IP interface with additional parameters and pass the `full` method an
-/// open `TcpStream`.
+/// open [`TcpStream`].
 ///
 /// # Returns
-/// Returns a [`std::result`] containing an `Instrument` with the TCP/IP interface if successful,
-/// or an `InstrumentError` if there was an error opening the port.
+/// Returns a [`Result`] containing an [`Instrument`] with the TCP/IP interface if successful,
+/// or an [`InstrumentError`] if there was an error opening the port.
 #[derive(Debug)]
 pub struct TcpIpInterface {}
 
@@ -42,12 +42,12 @@ impl TcpIpInterface {
 
     /// Try to create a new Instrument interface from an open TCP/IP stream.
     ///
-    /// This allows you to specify timeouts, etc. For the internal `Instrument` timeout, we will
-    /// use the `read_timeout` of the `TcpStream`. If this is `None`, we will use a default
+    /// This allows you to specify timeouts, etc. For the internal [`Instrument`] timeout, we will
+    /// use the `read_timeout` of the [`TcpStream`]. If this is `None`, we will use a default
     /// timeout of 3 seconds.
     ///
     /// # Arguments
-    /// * `stream` - An already open `TcpStream`.
+    /// * `stream` - An already open [`TcpStream`].
     pub fn full(stream: TcpStream) -> Result<Instrument<TcpStream>, InstrumentError> {
         let timeout = stream.read_timeout()?.unwrap_or(Duration::from_secs(3));
         Ok(Instrument::new(stream, timeout))

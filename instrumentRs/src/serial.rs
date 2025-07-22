@@ -18,8 +18,8 @@ use crate::{Instrument, InstrumentError};
 /// [`serialport::SerialPortBuilder`] structure.
 ///
 /// # Returns
-/// Returns a [`std::result`] containing an `Instrument` with the serial interface if successful,
-/// or an `InstrumentError` if there was an error opening the port.
+/// Returns a [`Result`] containing an [`Instrument`] with the serial interface if successful,
+/// or an [`InstrumentError`] if there was an error opening the port.
 #[derive(Debug)]
 pub struct SerialInterface {}
 
@@ -45,10 +45,10 @@ impl SerialInterface {
     ///
     /// Here, you can specify any additional parameters that is accepted by the [`serialport`]
     /// crate. You also have to specify the timeout inside your [`serialport::SerialPortBuilder`].
-    /// structure. This timeout is then passed on to the `Instrument` interface.
+    /// structure. This timeout is then passed on to the [`Instrument`] interface.
     ///
-    /// This function simply takes your `SerialPortBuilder`, opens the port, and reads the set
-    /// timeout from the port to pass on to the `Instrument` interface.
+    /// This function simply takes your [`serialport::SerialPortBuilder`], opens the port, and reads the set
+    /// timeout from the port to pass on to the [`Instrument`] interface.
     ///
     /// # Arguments
     /// * `builder` - A [`serialport::SerialPortBuilder`] that contains all the parameters for the

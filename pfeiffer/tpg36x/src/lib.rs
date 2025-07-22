@@ -1,11 +1,31 @@
-//! A rust driver for the Pfeiffer TPG36x vacuum gauge controller.
+//! A rust driver for the Pfeiffer/Inficon TPG36x vacuum gauge controller.
 //!
 //! This driver is by default set up to work with the dual gauge model (TPG362), but can also be
 //! set up to be used with the single gauge model (TPG361).
 //!
 //! # Example
 //!
-//! TODO:
+//! This example shows the usage via the TCP/IP interface. An example for the serial port is shown
+//! in the [`Tpg36x`] documentation.
+//!
+//! ```no_run
+//! use instrumentrs::TcpIpInterface;
+//! use pfeiffer_tpg36x::{SensorStatus, Tpg36x};
+//!
+//! // IP address and port of the instrument. Adjust to your setup!
+//! let addr = "192.168.1.10:8000";
+//!
+//! // Create a new TCP/IP instrument interface and use it to create a new Tpg36x instance.
+//! let tcpip_inst = TcpIpInterface::simple(addr).unwrap();
+//! let mut inst = Tpg36x::try_new(tcpip_inst).unwrap();
+//!
+//! // Check if the the first pressure sensor is on and if so, read the pressure and print it.
+//! let mut sensor1 = inst.get_channel(0).unwrap();
+//! let status = sensor1.get_status().unwrap();
+//!
+//! if status == SensorStatus::On {
+//!     println!("Current pressure: {}", sensor1.get_pressure().unwrap());
+//! }
 
 #![warn(missing_docs)]
 
@@ -25,7 +45,7 @@ use status::PressMsrDatStat;
 
 /// A rust driver for the TPG36x.
 ///
-/// This driver provides functionality to control the Pfeiffer TPG361 and TPG362 vacuum gauge
+/// This driver provides functionality to control the Pfeiffer/Inficon TPG361 and TPG362 vacuum gauge
 /// controllers.
 ///
 /// # Example via serial port connection
@@ -50,14 +70,14 @@ pub struct Tpg36x<T: InstrumentInterface> {
 }
 
 impl<T: InstrumentInterface> Tpg36x<T> {
-    /// Create a new Pfeiffer TPG36x instance with the given instrument interface.
+    /// Create a new TPG36x instance with the given instrument interface.
     ///
     /// This function can fail if the instrument is not answering, as the function queries the
     /// instrument upon initialization in order to set the correct pressure unit that is currently
     /// displayed.
     ///
     /// # Arguments
-    /// - `interface`: An instrument interface that implements the `InstrumentInterface` trait.
+    /// - `interface`: An instrument interface that implements the [`InstrumentInterface`] trait.
     pub fn try_new(interface: T) -> Result<Self, InstrumentError> {
         let mut intf = interface;
         intf.set_terminator("\r\n");
@@ -90,7 +110,7 @@ impl<T: InstrumentInterface> Tpg36x<T> {
 
     /// Get the ethernet configuration of the TPG36x.
     ///
-    /// This returns the current ethernet configuration of the TPG36x as an `EthernetConfig`
+    /// This returns the current ethernet configuration of the TPG36x as an [`EthernetConfig`]
     pub fn get_ethernet_config(&mut self) -> Result<EthernetConfig, InstrumentError> {
         let response = self.query("ETH")?;
         EthernetConfig::from_cmd_str(response.as_str())
@@ -195,9 +215,9 @@ impl<T: InstrumentInterface> Tpg36x<T> {
 
 /// Channel structure representing a single channel of the TPG36x.
 ///
-/// All commands to the channel must be sent through this structure. However, the channel itself
-/// can only be created through the `Tpg36x` struct. This is to ensure that the channel is
-/// always initialized with a valid interface.
+/// **This structure can only be created through the [`Tpg36x`] struct.**
+///
+/// Implementation of an individual channel and commands that go to it.
 pub struct Channel<T: InstrumentInterface> {
     idx: usize,
     interface: Arc<Mutex<T>>,
@@ -207,11 +227,11 @@ pub struct Channel<T: InstrumentInterface> {
 impl<T: InstrumentInterface> Channel<T> {
     /// Get the pressure of this channel in the given unit.
     ///
-    /// This will return a `Tpg36xMeasurement` struct containing the value either as a pressure or
+    /// This will return a [`Tpg36xMeasurement`] struct containing the value either as a pressure or
     /// as a voltage, depending on the setup of the unit.
     ///
     /// **Note**: If the unit on the instrument was changed manually, this may not return the
-    /// correct value! In this case, make sure that the `update_unit` function on the `Tpg36x`
+    /// correct value! In this case, make sure that the `update_unit` function on the [`Tpg36x`]
     /// struct prior to calling this function!
     pub fn get_pressure(&mut self) -> Result<Tpg36xMeasurement, InstrumentError> {
         let resp = self.query(&format!("PR{}", self.idx + 1))?;
@@ -272,7 +292,7 @@ impl<T: InstrumentInterface> Channel<T> {
 
     /// Get a new channel for the given instrument interface.
     ///
-    /// This function can only be called from inside of the `Tpg36x` struct.
+    /// This function can only be called from inside of the [`Tpg36x`] struct.
     fn new(idx: usize, interface: Arc<Mutex<T>>, unit: Arc<Mutex<PressureUnit>>) -> Self {
         Channel {
             idx,

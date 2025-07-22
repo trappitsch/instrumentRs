@@ -1,10 +1,28 @@
 //! A rust driver for the [DigOutBox](https://digoutbox.rtfd.io/)
 //!
-//! This driver provides all functionalities of the DigOutBox.
+//! This driver provides all functionalities of the DigOutBox. Connecting the DigOutBox via USB
+//! cable to your computer creates a serial port interface that you can use to communicate with the
+//! box.
 //!
 //! # Example
+//! ```no_run
+//! use instrumentrs::SerialInterface;
+//! use digoutbox::DigOutBox;
 //!
-//! TODO:
+//! let port = "/dev/ttyACM0";
+//! let baud = 9600;
+//!
+//! // Create a new serial instrument interface and use it to create a new DigOutBox instance.
+//! let inst_interface = SerialInterface::simple(port, baud).unwrap();
+//! let mut inst = DigOutBox::new(inst_interface);
+//!
+//! // Get the first channel (index 0) and set it to high.
+//! let mut channel = inst.get_channel(0).unwrap();
+//! channel.set_output(true).unwrap();
+//!
+//! // Now turn all channels off.
+//! inst.all_off().unwrap();
+//! ```
 
 #![warn(missing_docs)]
 
@@ -77,8 +95,8 @@ impl From<&str> for SoftwareControlStatus {
 /// A rust driver for the DigOutBox.
 ///
 /// To talk to the DigOutBox, you have to first define what interface you want to use. For example,
-/// you can use a blocking serial interface using [`serialport`]. Assuming the DigOutBox is
-/// available as `/dev/ttyACM0`, you could initialize this driver as following.
+/// you can use a blocking serial interface. Assuming the DigOutBox is available as `/dev/ttyACM0`,
+/// you could initialize this driver as following.
 ///
 /// ```no_run
 /// use instrumentrs::SerialInterface;
@@ -182,9 +200,9 @@ impl<T: InstrumentInterface> DigOutBox<T> {
 
 /// Channel structure representing a single channel of the DigOutBox.
 ///
-/// All commands to the channel must be sent through this structure. However, the channel itself
-/// can only be created through the `DigOutBox` struct. This is to ensure that the channel is
-/// always initialized with a valid interface.
+/// **This structure can only be created through the [`DigOutBox`] struct.**
+///
+/// Implementation of an individual channel and commands that go to it.
 pub struct Channel<T: InstrumentInterface> {
     idx: usize,
     interface: Arc<Mutex<T>>,

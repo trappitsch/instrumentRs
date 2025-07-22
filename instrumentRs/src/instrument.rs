@@ -1,6 +1,7 @@
 //! This module provides the main implementation for the Instrument Interface trait.
-//! It can be called with any type that implements `std::io::Read` and `std::io::Write`,
-//! such as `std::net::TcpStream` or `serialport::SerialPort`.
+//!
+//! It can be called with any type that implements [`std::io::Read`] and [`std::io::Write`],
+//! such as [`std::net::TcpStream`] or [`serialport::SerialPort`].
 
 use std::time::Duration;
 
@@ -14,6 +15,22 @@ use crate::InstrumentInterface;
 /// This struct can be used to communicate with instruments over the various interfaces. Handy
 /// shortcuts for creating various interfaces are provides as well. However, this general
 /// implementation can also be used with any other types that are not provided by `InstrumentRs`.
+///
+/// # Example
+///
+/// The following shows a simple example on how to create an [`Instrument`] interface from your own
+/// interface that implements [`std::io::Read`] and [`std::io::Write`]. Of course, to just use a
+/// simple [`std::net::TcpStream`] as shown here, you can also use the
+/// [`crate::TcpIpInterface`] interface.
+///
+/// ```no_run
+/// use std::{net::TcpStream, time::Duration};
+///
+/// use instrumentrs::Instrument;
+///
+/// let my_interface = TcpStream::connect("192.168.10.1:8000").unwrap();
+/// let inst_interface = Instrument::new(my_interface, Duration::from_secs(3));
+/// ```
 pub struct Instrument<P: std::io::Read + std::io::Write> {
     port: P,
     terminator: String,
@@ -21,7 +38,7 @@ pub struct Instrument<P: std::io::Read + std::io::Write> {
 }
 
 impl<P: std::io::Read + std::io::Write> Instrument<P> {
-    /// Try to create a new instance of `Instrument` with a given interface.
+    /// Try to create a new instance of [`Instrument`] with a given interface.
     pub fn new(port: P, timeout: Duration) -> Self {
         Self {
             port,
@@ -59,7 +76,7 @@ impl<P: std::io::Read + std::io::Write> InstrumentInterface for Instrument<P> {
 /// The error enum for all instruments.
 ///
 /// For any command sending or querying, your instrument should return either an empty result or a
-/// result with the query where this Error is the alternative. `InstrumentError` makes it easy to
+/// result with the query where this Error is the alternative. [`InstrumentError`] makes it easy to
 /// propagate all the sending commands, querying errors forward with the `?` operator such that
 /// errors propagate nicely. If this is not possible, it is considered a bug and should be
 /// reported.

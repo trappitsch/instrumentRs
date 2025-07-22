@@ -1,4 +1,8 @@
 //! The loopback module provides an instrument simulator for testing purposes.
+//!
+//! Check out the [`LoopbackInterface`] for more details and examples on how to use it. You can
+//! also find simple and more advanced test examples that use the loopback interface in the
+//! instrument drivers that are available in the GitHub repository of this project.
 
 use std::{collections::VecDeque, fmt};
 
@@ -21,7 +25,85 @@ impl IncrIndex {
 
 /// An interface that allows you to simply write tests for your instrument driver.
 ///
-/// TODO: Write docs for how to use the loopback interface!
+/// # Example
+///
+/// Let us build a simple instrument that would send a `"*IDN?"` command to an instrument and get
+/// back a string and then write a test for it using the [`LoopbackInterface`]. The instrument itself
+/// would take any interface that implements the [`InstrumentInterface`] trait.
+///
+/// ```
+/// use std::sync::{Arc, Mutex};
+/// use instrumentrs::{InstrumentInterface, InstrumentError, LoopbackInterface};
+///
+/// struct MyInstrument<T: InstrumentInterface> {
+///    interface: Arc<Mutex<T>>,
+/// }
+///
+/// impl<T: InstrumentInterface> MyInstrument<T> {
+///    fn new(interface: T) -> Self {
+///        let interface = Arc::new(Mutex::new(interface));
+///        MyInstrument { interface }
+///    }
+///
+///    fn get_name(&mut self) -> Result<String, InstrumentError> {
+///        self.interface.lock().unwrap().query("*IDN?")
+///    }
+/// }
+///
+/// #[cfg(test)]
+/// mod tests {
+///    use super::*;
+///
+///    /// Simple check to ensure the instrument returns its name as expected.
+///    #[test]
+///    fn test_get_name() {
+///        let host2inst = vec!["*IDN?"];
+///        let inst2host = vec!["MyInstrument,1.0,1234"];
+///        let terminator = "\n";  // the default terminator
+///        
+///        // Create the loopback interface with the expected commands.
+///        let loopback = LoopbackInterface::new(host2inst, inst2host, terminator);
+///
+///        // Create the instrument
+///        let mut inst= MyInstrument::new(loopback);
+///        assert_eq!("MyInstrument,1.0,1234", inst.get_name().unwrap());
+///    }
+///
+///    /// This test will panic as it expects as it expects a command from host to instrument that
+///    /// is never provided.
+///    #[test]
+///    #[should_panic]
+///    fn test_leftover_commands() {
+///        let host2inst = vec!["*IDN?"];
+///        let inst2host = vec!["MyInstrument,1.0,1234"];
+///
+///        // Create the loopback interface with the expected commands.
+///        let loopback = LoopbackInterface::new(host2inst, inst2host, "\n");
+///
+///        // Create the instrument
+///        let mut inst = MyInstrument::new(loopback);
+///
+///        // Instrument dropped here -> panics as host2inst and inst2host have unused commands.
+///    }
+///
+///    /// This test will panic as an unexpected command is sent to the instrument.
+///    #[test]
+///    #[should_panic]
+///    fn test_unexpected_command() {
+///        let host2inst = vec!["*IDX?"];
+///        let inst2host = vec!["MyInstrument,1.0,1234"];
+///
+///        // Create the loopback interface with the expected commands.
+///        let loopback = LoopbackInterface::new(host2inst, inst2host, "\n");
+///
+///        // Create the instrument
+///        let mut inst = MyInstrument::new(loopback);
+///
+///        // This will panic as the command is not expected.
+///        let _ = inst.get_name().unwrap();
+///     }
+/// }
+/// ```
 pub struct LoopbackInterface<T>
 where
     T: AsRef<[u8]> + fmt::Display + PartialEq,
@@ -41,13 +123,21 @@ where
 {
     /// Create a new loopback instrument with given commands to and from instrument.
     ///
-    /// The commands are read in order. Call the [`LoopbackInstrument::finalize`] command in order to ensure that no
-    /// commands are left in either vector.
+    /// The main purpose of this interface is to provide a simple loopback interface for testing of
+    /// instrument drivers. To do so, you can provide a list of commands that are expected to go from
+    /// the host to the instrument, and a list of commands that are expected to go from the
+    /// instrument to the host. The commands are read in order. At the end, when the
+    /// [`LoopbackInterface`] is dropped, a `finalize` function is called that checks if all
+    /// commands that you have provided have been used. If not, a the program panics. During
+    /// instrument calls, whenever something is sent to the instrument that is not expected, the
+    /// [`LoopbackInterface`] will panic as well. This way, your tests can ensure easily that all
+    /// commands that you have provided are used in the correct order.
     ///
     /// # Arguments:
     /// * `from_host` - Commands from host to instrument.
     /// * `from_inst` - Commands from instrument to host.
-    /// * `terminator_exp` - The expected terminator.
+    /// * `terminator_exp` - The expected terminator. This is required for every instantiation of
+    ///   the loopback interface.
     pub fn new(from_host: Vec<T>, from_inst: Vec<T>, terminator_exp: &str) -> Self {
         LoopbackInterface {
             from_host,
@@ -60,9 +150,9 @@ where
         }
     }
 
-    /// This command panics if not all commands in the `LoopbackInstrument` have been used.
+    /// This command panics if not all commands in the [`LoopbackInterface`] have been used.
     ///
-    /// It is automatically called when the `LoopbackInstrument` is dropped, but you can also call
+    /// It is automatically called when the [`LoopbackInterface`] is dropped, but you can also call
     /// it manually to ensure that all commands have been used.
     pub fn finalize(&mut self) {
         let from_host_leftover = self.from_host.get(self.from_host_index.next());

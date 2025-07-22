@@ -1,16 +1,32 @@
 //! InstrumentRs: Talk to your (scientific) equipment from with Rust
 //!
 //! The InstrumentRs library provides standardized interfaces to talk to scientific equipment via
-//! various different ports. To do so, it provides an `InstrumentInterface` trait and its
-//! implementations. Furthermore, we also provide an `InstrumentError` error type that instrument
-//! drivers should return. Any connection type that implements the `std::io::Read` and
-//! `std::io::Write` traits can be used as an instrument interface. Furthermore, we also provide
+//! various different ports. To do so, it provides an [`InstrumentInterface`] trait and its
+//! implementations. Furthermore, we also provide an [`InstrumentError`] error type that instrument
+//! drivers should return. Any connection type that implements the [`std::io::Read`] and
+//! [`std::io::Write`] traits can be used as an instrument interface. Furthermore, we also provide
 //! simplified access to the following interfaces:
 //!
 //! - TCP/IP (blocking) using the [`std::net`] module.
 //! - Serial (blocking) using the [`serialport`] crate (feature `"serial"`).
 //!
 //! We are planning in the future to also support asynchronous interfaces.
+//!
+//! # Example
+//!
+//! The following shows a simple example on how to get an [`Instrument`] interface using a simple
+//! socket address.
+//!
+//! ```no_run
+//! use std::net::SocketAddr;
+//! use instrumentrs::TcpIpInterface;
+//!
+//! let address = "192.168.1.10:8000";
+//! let inst_interface = TcpIpInterface::simple(address);
+//! ```
+//!
+//! You can now take this instrument interface and pass it to any of the instrument drivers, of
+//! course assuming that the actual instrument is connected to this interface.
 //!
 //! # Goals and non-goals of this project
 //!
@@ -27,7 +43,7 @@
 //! repository on GitHub in order to get your driver added here. This means that we will take
 //! over maintainership of the driver and release them as bugs get squished, etc. In order for this
 //! to work, all functionality of your instrument driver must be tested with hardware, but also
-//! with tests using the provided `LoopbackInterface`.
+//! with tests using the provided [`LoopbackInterface`].
 //!
 //! # Inspiration
 //!
@@ -43,7 +59,6 @@
 //! need is, etc.
 //!
 //! # License
-//!
 //!
 //! Licensed under either
 //!
@@ -74,7 +89,7 @@ pub use tcp_ip::TcpIpInterface;
 #[cfg(feature = "serial")]
 pub use serial::SerialInterface;
 
-/// The `InstrumentInterface` trait defines the interface for controlling instruments.
+/// The [`InstrumentInterface`] trait defines the interface for controlling instruments.
 ///
 /// It currently contains a method for sending commands and querying responses from the instrument.
 /// A blocking implementation for these methods should probably always be required.
@@ -86,7 +101,7 @@ pub trait InstrumentInterface {
     ///
     /// This function checks if the instrument acknowledges the command sent to it with the correct
     /// return value or not. If no acknowledgment is received, it returns an
-    /// `InstrumentError::NotAcknowledged` error with the incorrect response received in the error
+    /// [`InstrumentError::NotAcknowledged`] error with the incorrect response received in the error
     /// message.
     ///
     /// # Arguments:
@@ -194,7 +209,7 @@ pub trait InstrumentInterface {
 
     /// Get the current timeout of the interface.
     ///
-    /// Returns the current timeout of the interface as a `Duration`. The default timeout, if not
+    /// Returns the current timeout of the interface as a [`Duration`]. The default timeout, if not]
     /// implemented, is set to three seconds.
     fn get_timeout(&self) -> Duration {
         Duration::from_secs(3)
