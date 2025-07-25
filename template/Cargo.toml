@@ -1,0 +1,15 @@
+[package]
+name = "{{ crate_name }}"
+version = "0.1.0"
+authors = ["{{ authors }}"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "DESCRIPTION"
+
+[dependencies]
+instrumentrs    = { version = "0.1.0"{% if instrumentrs_features != "" %}, features = ["{{ instrumentrs_features }}"]{% endif %} }
+{% if units -%}
+measurements    = { version = "0.11.0", features = ["std"] }
+{% endif %}
+[dev-dependencies]
+rstest          = "0.25.0"

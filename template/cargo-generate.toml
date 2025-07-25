@@ -1,0 +1,15 @@
+[placeholders]
+manufacturer = { prompt = "Who is the manufacturer of the device that you are writing a driver for? (e.g., Starlabs)", type = "string" }
+device = { prompt = "What device name do you want to use for the driver / what is the name of the device? (e.g., VMX432)", type = "string" }
+num_channels = { prompt = "How many channels does your device have?", default = "1", type = "string", regex="^[1-9]\\d*$" }
+units = { prompt = "Is channel setting/getting done in unitful values?", default = true, type = "bool" }
+terminator = { prompt = "What terminator does your device use? (e.g., \"\\r\\n\")", default = "\\n", type = "string" }
+pkg_description = { prompt = "Please provide a short description of the driver (for crates.io package description)", type = "text" }
+instrumentrs_features = { prompt = "What features of instrumentRs do you want to enable?", choices = [
+  "",
+  "serial",
+], default = "", type = "string" }
+
+[template]
+ignore = [".github/workflows/build_template.yml"]
+

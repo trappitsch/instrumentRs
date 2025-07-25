@@ -19,6 +19,18 @@ you are interested in using this project and/or contributing, please get in touc
 issue on GitHub. This would also be super valuable as we would learn how it is used, what the
 need is, etc.
 
+## Instrument driver template
+
+If you would like to write a driver for an instrument, we provide a 
+[`cargo-generate`](https://github.com/cargo-generate/cargo-generate) template 
+that you can use to get started quickly. To use it, install 
+[`cargo-generate`](https://github.com/cargo-generate/cargo-generate) and run the
+following command:
+
+```bash
+cargo generate --git https://github.com/trappitsch/instrumentRs
+```
+
 ## License
 
 Licensed under either of
