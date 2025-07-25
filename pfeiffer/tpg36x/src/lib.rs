@@ -85,7 +85,7 @@ impl<T: InstrumentInterface> Tpg36x<T> {
         let mut instrument = Tpg36x {
             interface,
             unit: Arc::new(Mutex::new(PressureUnit::default())),
-            num_channels: 2, // Default for the standard DigOutBox
+            num_channels: 2, // Default for the TPG362 model, can be changed later
         };
         instrument.update_unit()?;
         Ok(instrument)
@@ -140,14 +140,14 @@ impl<T: InstrumentInterface> Tpg36x<T> {
         Ok(self.query("AYT")?.trim().to_string())
     }
 
-    /// Set the number of channels for the DigOutBox.
+    /// Set the number of channels for the TPG36x.
     pub fn set_num_channels(&mut self, num: usize) -> Result<(), InstrumentError> {
-        if num >= 2 {
+        if !(1..3).contains(&num) {
             let num: i64 = num.try_into().unwrap_or(i64::MAX);
             return Err(InstrumentError::IntValueOutOfRange {
                 value: num,
-                min: 0,
-                max: 1,
+                min: 1,
+                max: 2,
             });
         }
         self.num_channels = num;

@@ -85,7 +85,7 @@ fn test_get_channel(mut emp_inst: DigOutBox<LoopbackInterface<String>>) {
     }
 
     // Now set the box up so it has only 6 channels
-    emp_inst.set_num_channels(6);
+    emp_inst.set_num_channels(6).unwrap();
     // Try to get a channel that is out of range
     assert!(emp_inst.get_channel(6).is_err());
 }

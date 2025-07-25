@@ -166,8 +166,14 @@ impl<T: InstrumentInterface> DigOutBox<T> {
     }
 
     /// Set the number of channels for the DigOutBox.
-    pub fn set_num_channels(&mut self, num: usize) {
+    pub fn set_num_channels(&mut self, num: usize) -> Result<(), InstrumentError> {
+        if num == 0 {
+            return Err(InstrumentError::InvalidArgument(
+                "Number of channels must be greater than 0".to_string(),
+            ));
+        }
         self.num_channels = num;
+        Ok(())
     }
 
     /// Get the current software control status of the instrument.

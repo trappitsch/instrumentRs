@@ -66,6 +66,7 @@ fn test_get_channel(mut emp_tpg36x: Tpg36Lbk) {
     assert!(emp_tpg36x.get_channel(1).is_err());
 
     // Only one and two channel instruments exist!
+    assert!(emp_tpg36x.set_num_channels(0).is_err());
     assert!(emp_tpg36x.set_num_channels(3).is_err());
 }
 

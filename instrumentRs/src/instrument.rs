@@ -120,6 +120,10 @@ pub enum InstrumentError {
         /// The maximum value that is allowed.
         max: i64,
     },
+    /// Error when an invalid argument is passed to a function. This error contains only an error
+    /// message, but no arguments. It is intended for the user.
+    #[error("{0}")]
+    InvalidArgument(String),
     /// Error when reading from/writing to an interface. See [`std::io::Error`] for more details.
     #[error(transparent)]
     Io(#[from] std::io::Error),
