@@ -8,6 +8,7 @@ repository = "https://github.com/trappitsch/instrumentRs/tree/main/other/digoutb
 description = "A library to contral a DigOutBox from Rust using `instrumentRs`."
 
 [dependencies]
+critical-section = { version = "1.2.0", features = ["std"] }
 instrumentrs    = { version = "0.1.0", path = "../../instrumentRs", features = ["serial"] }
 
 [dev-dependencies]

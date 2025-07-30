@@ -26,10 +26,11 @@
 
 #![deny(warnings, missing_docs)]
 
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::fmt::Display;
+
+use core::cell::RefCell;
+use critical_section::Mutex;
+use std::sync::Arc;
 
 use instrumentrs::{InstrumentError, InstrumentInterface};
 
@@ -112,7 +113,7 @@ impl From<&str> for SoftwareControlStatus {
 ///
 /// This would print the name, hardware, and software version of the instrument to `stdout`.
 pub struct DigOutBox<T: InstrumentInterface> {
-    interface: Arc<Mutex<T>>,
+    interface: Arc<Mutex<RefCell<T>>>,
     num_channels: usize,
 }
 
@@ -120,7 +121,7 @@ impl<T: InstrumentInterface> DigOutBox<T> {
     /// Create a new DigOutBox instance with the given instrument interface.
     pub fn new(interface: T) -> Self {
         DigOutBox {
-            interface: Arc::new(Mutex::new(interface)),
+            interface: Arc::new(Mutex::new(RefCell::new(interface))),
             num_channels: 16, // Default for the standard DigOutBox
         }
     }
@@ -186,21 +187,18 @@ impl<T: InstrumentInterface> DigOutBox<T> {
 
     /// Send a command to the instrument.
     fn sendcmd(&mut self, cmd: &str) -> Result<(), InstrumentError> {
-        {
-            self.interface
-                .lock()
-                .expect("Mutext should not be poisoned")
-                .sendcmd(cmd)?;
-        }
-        Ok(())
+        critical_section::with(|cs| {
+            let mut iface = self.interface.borrow_ref_mut(cs);
+            iface.sendcmd(cmd)
+        })
     }
 
     /// Query the instrument with a command and return the response as a String.
     fn query(&mut self, cmd: &str) -> Result<String, InstrumentError> {
-        self.interface
-            .lock()
-            .expect("Mutex should not be poisoned")
-            .query(cmd)
+        critical_section::with(|cs| {
+            let mut iface = self.interface.borrow_ref_mut(cs);
+            iface.query(cmd)
+        })
     }
 }
 
@@ -220,7 +218,7 @@ impl<T: InstrumentInterface> Clone for DigOutBox<T> {
 /// Implementation of an individual channel and commands that go to it.
 pub struct Channel<T: InstrumentInterface> {
     idx: usize,
-    interface: Arc<Mutex<T>>,
+    interface: Arc<Mutex<RefCell<T>>>,
 }
 
 impl<T: InstrumentInterface> Channel<T> {
@@ -244,7 +242,7 @@ impl<T: InstrumentInterface> Channel<T> {
     /// Get a new channel for the given instrument interface.
     ///
     /// This function can only be called from inside of the `DigOutBox` struct.
-    fn new(idx: usize, interface: Arc<Mutex<T>>) -> Self {
+    fn new(idx: usize, interface: Arc<Mutex<RefCell<T>>>) -> Self {
         Channel { idx, interface }
     }
 
@@ -257,13 +255,10 @@ impl<T: InstrumentInterface> Channel<T> {
     /// - `cmd`: Command to send to the channel
     /// - `value`: Argument to send along with this command.
     fn sendcmd(&mut self, cmd: &str, value: &str) -> Result<(), InstrumentError> {
-        {
-            self.interface
-                .lock()
-                .expect("Mutex should not be poisoned")
-                .sendcmd(&format!("{cmd}{0} {value}", self.idx))?;
-        }
-        Ok(())
+        critical_section::with(|cs| {
+            let mut iface = self.interface.borrow_ref_mut(cs);
+            iface.sendcmd(&format!("{cmd}{0} {value}", self.idx))
+        })
     }
 
     /// Send a query to this channel of the instrument.
@@ -274,10 +269,10 @@ impl<T: InstrumentInterface> Channel<T> {
     /// # Arguments:
     /// - `cmd`: Command to send to the channel
     fn query(&mut self, cmd: &str) -> Result<String, InstrumentError> {
-        self.interface
-            .lock()
-            .expect("Mutex should not be poisoned")
-            .query(&format!("{cmd}{0}?", self.idx))
+        critical_section::with(|cs| {
+            let mut iface = self.interface.borrow_ref_mut(cs);
+            iface.query(&format!("{cmd}{0}?", self.idx))
+        })
     }
 }
 
