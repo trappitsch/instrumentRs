@@ -34,7 +34,7 @@ use std::{
 use instrumentrs::{InstrumentError, InstrumentInterface};
 
 /// Enum representing the current interlock state of the device.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum InterlockStatus {
     /// Status that is returned when the box is ready for operation (interlock not triggered).
     Ready,
@@ -64,7 +64,7 @@ impl From<&str> for InterlockStatus {
 }
 
 /// Enum representing the current software lockout state of the device.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum SoftwareControlStatus {
     /// Status when software can be used to operate the device
     Ready,
@@ -204,6 +204,15 @@ impl<T: InstrumentInterface> DigOutBox<T> {
     }
 }
 
+impl<T: InstrumentInterface> Clone for DigOutBox<T> {
+    fn clone(&self) -> Self {
+        Self {
+            interface: self.interface.clone(),
+            num_channels: self.num_channels,
+        }
+    }
+}
+
 /// Channel structure representing a single channel of the DigOutBox.
 ///
 /// **This structure can only be created through the [`DigOutBox`] struct.**
@@ -269,5 +278,14 @@ impl<T: InstrumentInterface> Channel<T> {
             .lock()
             .expect("Mutex should not be poisoned")
             .query(&format!("{cmd}{0}?", self.idx))
+    }
+}
+
+impl<T: InstrumentInterface> Clone for Channel<T> {
+    fn clone(&self) -> Self {
+        Self {
+            idx: self.idx,
+            interface: self.interface.clone(),
+        }
     }
 }

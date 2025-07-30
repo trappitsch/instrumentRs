@@ -40,7 +40,7 @@ impl Display for Unit {
 /// ```no_run
 /// ``` 
 pub struct {{ device | upper_camel_case }}<T: InstrumentInterface> {
-    interface: Arc<Mutex<T>>,
+    interface:Arc<Mutex<T>>,
     {% if units -%}
     unit: Arc<Mutex<Unit>>, // TODO: Replace with actual unit type
     {% endif -%}
@@ -163,6 +163,20 @@ impl<T: InstrumentInterface> {{ device | upper_camel_case }}<T> {
 {% endif -%}
 }
 
+impl<T: InstrumentInterface> Clone for {{ device | upper_camel_case }}<T> {
+    fn clone(&self) -> Self {
+        Self {
+            interface: self.interface.clone(),
+            {% if units -%}
+            unit: self.unit.clone(),
+            {% endif -%}
+            {% if noc > 1 -%}
+            num_channels: self.num_channels,
+        {% endif -%}
+        }
+    }
+}
+
 {% if noc > 1 -%}
 /// Channel structure representing a single channel of the {{ device }}.
 ///
@@ -202,6 +216,18 @@ impl<T: InstrumentInterface> Channel<T> {
         self.sendcmd(cmd)?;
         let mut intf = self.interface.lock().expect("Mutex should not be poisoned");
         todo!();
+    }
+}
+
+impl<T: InstrumentInterface> Clone for Channel<T> {
+    fn clone(&self) -> Self {
+        Self {
+            idx: self.idx,
+            interface: self.interface.clone(),
+            {% if units -%}
+            unit: self.unit.clone(),
+        {% endif -%}
+        }
     }
 }
 {% endif -%}

@@ -213,6 +213,16 @@ impl<T: InstrumentInterface> Tpg36x<T> {
     }
 }
 
+impl<T: InstrumentInterface> Clone for Tpg36x<T> {
+    fn clone(&self) -> Self {
+        Self {
+            interface: self.interface.clone(),
+            unit: self.unit.clone(),
+            num_channels: self.num_channels,
+        }
+    }
+}
+
 /// Channel structure representing a single channel of the TPG36x.
 ///
 /// **This structure can only be created through the [`Tpg36x`] struct.**
@@ -314,6 +324,16 @@ impl<T: InstrumentInterface> Channel<T> {
         let mut intf = self.interface.lock().expect("Mutex should not be poisoned");
         intf.write("\u{5}")?; // send "ENQ"
         intf.read_until_terminator()
+    }
+}
+
+impl<T: InstrumentInterface> Clone for Channel<T> {
+    fn clone(&self) -> Self {
+        Self {
+            idx: self.idx,
+            interface: self.interface.clone(),
+            unit: self.unit.clone(),
+        }
     }
 }
 
