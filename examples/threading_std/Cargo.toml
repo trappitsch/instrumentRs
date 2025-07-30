@@ -1,0 +1,10 @@
+[package]
+name = "threading-std"
+version = "0.1.0"
+authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+digoutbox       = { path = "../../other/digoutbox", version = "0.1.0"}
+instrumentrs    = { version = "0.1.0", path = "../../instrumentRs", features = ["serial"] }
