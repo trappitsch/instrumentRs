@@ -13,3 +13,6 @@ The terminator for all commands is `\n`.
 ## Getting started
 
 This is currently setup to be flashed using a debug probe and `probe-rs`. 
+However, you can also use `picotools` to flash the file directly without a probe.
+Check the `.cargo/config.toml` file to select the correct settings.
+

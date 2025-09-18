@@ -1,5 +1,10 @@
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
+
+# If you have a SWD debugger, you can use `probe-rs` as a runner. 
 runner = "probe-rs run --chip RP235x --speed 12000 --protocol swd"
+
+# Otherwise, uncomment the following line to use `picotool` as a runner.
+# runner = "picotool load -x -t elf"
 
 [build]
 target = "thumbv8m.main-none-eabihf"
