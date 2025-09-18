@@ -5,7 +5,7 @@ package.authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
 package.edition = "2024"
 package.license = "MIT OR Apache-2.0"
 members = ["instrumentRs", "other/digoutbox", "pfeiffer/tpg36x"]
-exclude = ["examples", "examples/*", "template", "template/*"]
+exclude = ["demos", "demos/*", "examples", "examples/*", "template", "template/*"]
 
 [workspace.dependencies]
 measurements    = "0.11.0"

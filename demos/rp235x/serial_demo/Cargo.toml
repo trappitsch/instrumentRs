@@ -1,0 +1,17 @@
+[package]
+name = "serial_demo"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cortex-m            = "0.7.2"
+cortex-m-rt         = "0.7"
+critical-section    = "1.2.0"
+defmt               = "1.0.1"
+defmt-rtt           = "1.0.0"
+embedded-hal        = "1.0.0"
+rp235x-hal          = { version = "0.3.0", features = ["binary-info", "critical-section-impl", "rt", "defmt"]}
+panic-halt          = "0.2.0"
+rp-binary-info      = "0.1.1"
+usb-device          = "0.3.2"
+usbd-serial         = "0.2.2"
