@@ -98,6 +98,9 @@ pub enum InstrumentError {
         /// Total number of channels.
         nof_channels: usize,
     },
+    /// The instrument checksum of a given package is invalid.
+    #[error("Checksum invalid")]
+    ChecksumInvalid,
     /// A given float value is out of the specified range. The error contains the value that was
     /// sent, the minimum value that is allowed, and the maximum value that is allowed.
     #[error("Float value {value} is out of range. Allowed range is [{min}, {max}]")]
@@ -134,7 +137,10 @@ pub enum InstrumentError {
     /// descriptive enough for the user.
     #[error("{0}")]
     InstrumentStatus(String),
-    /// Instrument response could not be parsed becuase it was unexpected by the driver. This error
+    /// A package received from an instrument is invalid. The error message contains the problem.
+    #[error("{0}")]
+    PackageInvalid(String),
+    /// Instrument response could not be parsed because it was unexpected by the driver. This error
     /// contains the response that was received from the instrument.
     #[error("Response from instrument could not be parsed. Response was: {0}")]
     ResponseParseError(String),
