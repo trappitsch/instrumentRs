@@ -1,19 +1,19 @@
 use digoutbox::*;
-use instrumentrs::{InstrumentError, LoopbackInterface};
+use instrumentrs::{InstrumentError, LoopbackInterfaceStr};
 use rstest::*;
 
 /// Create a new loopback instrument from the given input string slices.
-fn crt_inst(host2inst: Vec<&str>, inst2host: Vec<&str>) -> DigOutBox<LoopbackInterface<String>> {
+fn crt_inst(host2inst: Vec<&str>, inst2host: Vec<&str>) -> DigOutBox<LoopbackInterfaceStr> {
     let term = "\n";
     let h2i: Vec<String> = host2inst.iter().map(|s| s.to_string()).collect();
     let i2h: Vec<String> = inst2host.iter().map(|s| s.to_string()).collect();
-    let interface = LoopbackInterface::new(h2i, i2h, term);
+    let interface = LoopbackInterfaceStr::new(h2i, i2h, term);
     DigOutBox::new(interface)
 }
 
 /// Create an empty loopback interface for the DigOutBox instrument.
 #[fixture]
-fn emp_inst() -> DigOutBox<LoopbackInterface<String>> {
+fn emp_inst() -> DigOutBox<LoopbackInterfaceStr> {
     crt_inst(vec![], vec![])
 }
 
@@ -71,7 +71,7 @@ fn test_get_software_control_status() {
 
 // Tests for the channels
 #[rstest]
-fn test_get_channel(mut emp_inst: DigOutBox<LoopbackInterface<String>>) {
+fn test_get_channel(mut emp_inst: DigOutBox<LoopbackInterfaceStr>) {
     // Get a channel and check if it is created correctly
     let _ = emp_inst.get_channel(0).unwrap();
 

@@ -5,13 +5,13 @@ use std::net::Ipv4Addr;
 use measurements::{Measurement, test_utils::almost_eq};
 use rstest::*;
 
-use instrumentrs::LoopbackInterface;
+use instrumentrs::LoopbackInterfaceStr;
 
 use pfeiffer_tpg36x::{
     DhcpConfig, EthernetConfig, PressureUnit, SensorStatus, Tpg36x, Tpg36xMeasurement,
 };
 
-type Tpg36Lbk = Tpg36x<LoopbackInterface<String>>;
+type Tpg36Lbk = Tpg36x<LoopbackInterfaceStr>;
 
 const ENQ: &str = "\u{5}";
 const ACK: &str = "\u{6}";
@@ -39,13 +39,13 @@ fn crt_inst(host2inst: Vec<&str>, inst2host: Vec<&str>) -> Tpg36Lbk {
         .for_each(|s| out.push(format!("{s}{term}")));
 
     // initialize the interface with empty terminator, as we set it manually above!
-    let interface = LoopbackInterface::new(inp, out, "");
+    let interface = LoopbackInterfaceStr::new(inp, out, "");
     Tpg36x::try_new(interface).unwrap()
 }
 
 /// A fixture to create an empty TPG36x loopback interface.
 #[fixture]
-fn emp_tpg36x() -> Tpg36x<LoopbackInterface<String>> {
+fn emp_tpg36x() -> Tpg36x<LoopbackInterfaceStr> {
     crt_inst(vec![], vec![])
 }
 

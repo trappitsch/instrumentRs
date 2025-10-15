@@ -1,7 +1,7 @@
 //! Tests for the [`Instrument`] interface itself.
 //!
 //! Note that many of the functionality of the [`InstrumentInterface`] trait is tested in the
-//! [`instrumentrs::LoopbackInterface`] tests.
+//! [`instrumentrs::LoopbackInterfaceStr`] tests.
 
 use std::{collections::VecDeque, time::Duration};
 

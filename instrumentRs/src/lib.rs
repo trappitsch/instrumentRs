@@ -43,7 +43,7 @@
 //! repository on GitHub in order to get your driver added here. This means that we will take
 //! over maintainership of the driver and release them as bugs get squished, etc. In order for this
 //! to work, all functionality of your instrument driver must be tested with hardware, but also
-//! with tests using the provided [`LoopbackInterface`].
+//! with tests using the provided [`LoopbackInterfaceStr`].
 //!
 //! # Inspiration
 //!
@@ -83,7 +83,7 @@ mod tcp_ip;
 use std::time::{Duration, Instant};
 
 pub use instrument::{Instrument, InstrumentError};
-pub use loopback::LoopbackInterface;
+pub use loopback::LoopbackInterfaceStr;
 pub use tcp_ip::TcpIpInterface;
 
 #[cfg(feature = "serial")]
