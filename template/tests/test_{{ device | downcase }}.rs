@@ -2,12 +2,12 @@
 
 use rstest::*; 
 
-use instrumentrs::LoopbackInterface;
+use instrumentrs::LoopbackInterfaceString;
 
 use {{ crate_name }}::*;
 
 // Type alias for the loopback interface with the {{ device }} driver.
-type {{ device | upper_camel_case }}Lbk = {{ device | upper_camel_case }}<LoopbackInterface<String>>;
+type {{ device | upper_camel_case }}Lbk = {{ device | upper_camel_case }}<LoopbackInterfaceString>;
 
 /// Function that creates a new {{ device | upper_camel_case }} instance with the given input
 /// and output commands.
@@ -15,7 +15,7 @@ fn crt_inst(host2inst: Vec<&str>, inst2host: Vec<&str>) -> {{ device | upper_cam
     let term = "{{ terminator }}";
     let h2i: Vec<String> = host2inst.iter().map(|s| s.to_string()).collect();
     let i2h: Vec<String> = inst2host.iter().map(|s| s.to_string()).collect();
-    let interface = LoopbackInterface::new(h2i, i2h, term);
+    let interface = LoopbackInterfaceString::new(h2i, i2h, term);
     {{ device | upper_camel_case }}::try_new(interface).unwrap()
 }
 
