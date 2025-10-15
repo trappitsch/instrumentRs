@@ -2,18 +2,18 @@
 
 use rstest::*;
 
-use instrumentrs::{InstrumentInterface, LoopbackInterfaceStr};
+use instrumentrs::{InstrumentInterface, LoopbackInterfaceString};
 
-/// A function that creates a new `LoopbackInterfaceStr` with the given input and output vectors.
-fn crt_lbk(input: Vec<&str>, output: Vec<&str>) -> LoopbackInterfaceStr {
+/// A function that creates a new `LoopbackInterfaceString` with the given input and output vectors.
+fn crt_lbk(input: Vec<&str>, output: Vec<&str>) -> LoopbackInterfaceString {
     let input = input.iter().map(|s| s.to_string()).collect();
     let output = output.iter().map(|s| s.to_string()).collect();
-    LoopbackInterfaceStr::new(input, output, "\n")
+    LoopbackInterfaceString::new(input, output, "\n")
 }
 
 /// Create a loopback interface that contains no commands.
 #[fixture]
-fn emp_lbk() -> LoopbackInterfaceStr {
+fn emp_lbk() -> LoopbackInterfaceString {
     crt_lbk(vec![], vec![])
 }
 
@@ -35,9 +35,9 @@ fn check_acknowledgment_fail() {
 /// Ensure `finalize` method passes if an empty loopback interface is used.
 ///
 /// This routine calls the finalize method manually, however, it is not necessary to do so as it is
-/// implemented in the `Drop` trait for `LoopbackInterfaceStr`.
+/// implemented in the `Drop` trait for `LoopbackInterfaceString`.
 #[rstest]
-fn finalize_test(mut emp_lbk: LoopbackInterfaceStr) {
+fn finalize_test(mut emp_lbk: LoopbackInterfaceString) {
     emp_lbk.finalize();
 }
 

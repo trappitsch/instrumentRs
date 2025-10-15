@@ -1,6 +1,10 @@
 //! The loopback module provides an instrument simulator for testing purposes.
 //!
-//! Check out the [`LoopbackInterfaceStr`] for more details and examples on how to use it. You can
+//! The [`LoopbackInterfaceString`] allows to test instruments drivers that communicate using
+//! strings (which are then encoded as bytes of course) and have a fixed terminator to declare the
+//! end of a line.
+//!
+//! Check out the [`LoopbackInterfaceString`] for more details and examples on how to use it. You can
 //! also find simple and more advanced test examples that use the loopback interface in the
 //! instrument drivers that are available in the GitHub repository of this project.
 
@@ -28,12 +32,12 @@ impl IncrIndex {
 /// # Example
 ///
 /// Let us build a simple instrument that would send a `"*IDN?"` command to an instrument and get
-/// back a string and then write a test for it using the [`LoopbackInterfaceStr`]. The instrument itself
+/// back a string and then write a test for it using the [`LoopbackInterfaceString`]. The instrument itself
 /// would take any interface that implements the [`InstrumentInterface`] trait.
 ///
 /// ```
 /// use std::sync::{Arc, Mutex};
-/// use instrumentrs::{InstrumentInterface, InstrumentError, LoopbackInterfaceStr};
+/// use instrumentrs::{InstrumentInterface, InstrumentError, LoopbackInterfaceString};
 ///
 /// struct MyInstrument<T: InstrumentInterface> {
 ///    interface: Arc<Mutex<T>>,
@@ -62,7 +66,7 @@ impl IncrIndex {
 ///        let terminator = "\n";  // the default terminator
 ///        
 ///        // Create the loopback interface with the expected commands.
-///        let loopback = LoopbackInterfaceStr::new(host2inst, inst2host, terminator);
+///        let loopback = LoopbackInterfaceString::new(host2inst, inst2host, terminator);
 ///
 ///        // Create the instrument
 ///        let mut inst= MyInstrument::new(loopback);
@@ -78,7 +82,7 @@ impl IncrIndex {
 ///        let inst2host = vec!["MyInstrument,1.0,1234"];
 ///
 ///        // Create the loopback interface with the expected commands.
-///        let loopback = LoopbackInterfaceStr::new(host2inst, inst2host, "\n");
+///        let loopback = LoopbackInterfaceString::new(host2inst, inst2host, "\n");
 ///
 ///        // Create the instrument
 ///        let mut inst = MyInstrument::new(loopback);
@@ -94,7 +98,7 @@ impl IncrIndex {
 ///        let inst2host = vec!["MyInstrument,1.0,1234"];
 ///
 ///        // Create the loopback interface with the expected commands.
-///        let loopback = LoopbackInterfaceStr::new(host2inst, inst2host, "\n");
+///        let loopback = LoopbackInterfaceString::new(host2inst, inst2host, "\n");
 ///
 ///        // Create the instrument
 ///        let mut inst = MyInstrument::new(loopback);
@@ -104,7 +108,7 @@ impl IncrIndex {
 ///     }
 /// }
 /// ```
-pub struct LoopbackInterfaceStr {
+pub struct LoopbackInterfaceString {
     from_host: Vec<String>,
     from_inst: Vec<String>,
     terminator_exp: String,
@@ -114,17 +118,17 @@ pub struct LoopbackInterfaceStr {
     terminator: String,
 }
 
-impl LoopbackInterfaceStr {
+impl LoopbackInterfaceString {
     /// Create a new loopback instrument with given commands to and from instrument.
     ///
     /// The main purpose of this interface is to provide a simple loopback interface for testing of
     /// instrument drivers. To do so, you can provide a list of commands that are expected to go from
     /// the host to the instrument, and a list of commands that are expected to go from the
     /// instrument to the host. The commands are read in order. At the end, when the
-    /// [`LoopbackInterfaceStr`] is dropped, a `finalize` function is called that checks if all
+    /// [`LoopbackInterfaceString`] is dropped, a `finalize` function is called that checks if all
     /// commands that you have provided have been used. If not, a the program panics. During
     /// instrument calls, whenever something is sent to the instrument that is not expected, the
-    /// [`LoopbackInterfaceStr`] will panic as well. This way, your tests can ensure easily that all
+    /// [`LoopbackInterfaceString`] will panic as well. This way, your tests can ensure easily that all
     /// commands that you have provided are used in the correct order.
     ///
     /// # Arguments:
@@ -133,7 +137,7 @@ impl LoopbackInterfaceStr {
     /// * `terminator_exp` - The expected terminator. This is required for every instantiation of
     ///   the loopback interface.
     pub fn new(from_host: Vec<String>, from_inst: Vec<String>, terminator_exp: &str) -> Self {
-        LoopbackInterfaceStr {
+        LoopbackInterfaceString {
             from_host,
             from_inst,
             terminator_exp: terminator_exp.to_string(), // the expected terminator
@@ -144,9 +148,9 @@ impl LoopbackInterfaceStr {
         }
     }
 
-    /// This command panics if not all commands in the [`LoopbackInterfaceStr`] have been used.
+    /// This command panics if not all commands in the [`LoopbackInterfaceString`] have been used.
     ///
-    /// It is automatically called when the [`LoopbackInterfaceStr`] is dropped, but you can also call
+    /// It is automatically called when the [`LoopbackInterfaceString`] is dropped, but you can also call
     /// it manually to ensure that all commands have been used.
     pub fn finalize(&mut self) {
         let from_host_leftover = self.from_host.get(self.from_host_index.next());
@@ -201,7 +205,7 @@ impl LoopbackInterfaceStr {
     }
 }
 
-impl InstrumentInterface for LoopbackInterfaceStr {
+impl InstrumentInterface for LoopbackInterfaceString {
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), InstrumentError> {
         for byte in buf.iter_mut() {
             *byte = self.read_one_byte();
@@ -230,7 +234,7 @@ impl InstrumentInterface for LoopbackInterfaceStr {
     }
 }
 
-impl Drop for LoopbackInterfaceStr {
+impl Drop for LoopbackInterfaceString {
     fn drop(&mut self) {
         self.finalize();
     }
