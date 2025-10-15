@@ -33,7 +33,7 @@
 //! InstrumentRs shall provide a simple framework that allows you write your own instrument driver
 //! and share it with the community. It should allow you to focus on the driver design itself and
 //! take care of the interfacing for you. This allows your driver to be flexible, i.e., a serial
-//! device can be connected to a computer via RS232, but can also be connected via an ethernet to
+//! device can be connected to a computer via RS232, but can also be connected via an Ethernet to
 //! serial interface. InstrumentRs will take care of sending the correct commands for a specified
 //! instrument in the background.
 //!
@@ -43,7 +43,7 @@
 //! repository on GitHub in order to get your driver added here. This means that we will take
 //! over maintainership of the driver and release them as bugs get squished, etc. In order for this
 //! to work, all functionality of your instrument driver must be tested with hardware, but also
-//! with tests using the provided [`LoopbackInterface`].
+//! with tests using the provided [`LoopbackInterfaceString`].
 //!
 //! # Inspiration
 //!
@@ -83,7 +83,7 @@ mod tcp_ip;
 use std::time::{Duration, Instant};
 
 pub use instrument::{Instrument, InstrumentError};
-pub use loopback::LoopbackInterface;
+pub use loopback::LoopbackInterfaceString;
 pub use tcp_ip::TcpIpInterface;
 
 #[cfg(feature = "serial")]
