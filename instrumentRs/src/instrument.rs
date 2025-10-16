@@ -149,6 +149,10 @@ pub enum InstrumentError {
     /// documentation for more information.
     #[error(transparent)]
     Serialport(#[from] serialport::Error),
+    /// A sensor error occurred. This error is returned if the instrument reports a sensor error.
+    /// The error string contains should contain further information about the sensor error.
+    #[error("Sensor error: {0}")]
+    SensorError(String),
     /// Timeout occurred while waiting for a response from the instrument. The error contains the
     /// timeout that was exceeded.
     #[error(
