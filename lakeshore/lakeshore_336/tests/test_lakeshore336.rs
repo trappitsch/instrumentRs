@@ -36,6 +36,12 @@ fn test_get_name() {
     assert_eq!(name, "Lakeshore,336,12345678,1.0");
 }
 
+/// Get channel that does not exist.
+#[rstest]
+fn test_get_channel_out_of_range(mut emp_inst: Lakeshore336Lbk) {
+    assert!(emp_inst.get_channel(4).is_err());
+}
+
 /// Get temperature for the four channels.
 #[rstest]
 #[case(0, "A")]

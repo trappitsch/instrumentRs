@@ -12,7 +12,8 @@
 //! // The port where the Lakeshore336 is connected to
 //! let port = "/dev/ttyUSB0";
 //!
-//! // Get the serial interface for the Lakeshore336 and open it.
+//! // Get the serial interface for the Lakeshore336 and open it. This interface already sets the
+//! // correct parity, stop bits, and data bits for communication with the Lakeshore336.
 //! let serial_inst = SerialInterfaceLakeshore::simple(port).expect("Failed to open serial port");
 //! let mut inst = Lakeshore336::try_new(serial_inst).unwrap();
 //!
