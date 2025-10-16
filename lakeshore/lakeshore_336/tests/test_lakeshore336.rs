@@ -36,7 +36,7 @@ fn test_get_name() {
     assert_eq!(name, "Lakeshore,336,12345678,1.0");
 }
 
-/// Get temperature for the four channels. 
+/// Get temperature for the four channels.
 #[rstest]
 #[case(0, "A")]
 #[case(1, "B")]
