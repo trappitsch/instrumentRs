@@ -222,6 +222,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pfeiffer-omnicontrol"
+version = "0.1.0"
+dependencies = [
+ "instrumentrs",
+ "measurements",
+ "rstest",
+ "serialport",
+]
+
+[[package]]
 name = "pfeiffer-tpg36x"
 version = "0.1.0"
 dependencies = [

@@ -98,6 +98,9 @@ pub enum InstrumentError {
         /// Total number of channels.
         nof_channels: usize,
     },
+    /// The instrument checksum of a given package is invalid.
+    #[error("Checksum invalid")]
+    ChecksumInvalid,
     /// A given float value is out of the specified range. The error contains the value that was
     /// sent, the minimum value that is allowed, and the maximum value that is allowed.
     #[error("Float value {value} is out of range. Allowed range is [{min}, {max}]")]
