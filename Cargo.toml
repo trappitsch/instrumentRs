@@ -4,7 +4,7 @@ package.version = "0.1.0"
 package.authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
 package.edition = "2024"
 package.license = "MIT OR Apache-2.0"
-members = ["instrumentRs", "other/digoutbox", "lakeshore/lakeshore_336", "pfeiffer/tpg36x"]
+members = ["instrumentRs", "agilent/agilent_4uhv", "other/digoutbox", "lakeshore/lakeshore_336", "pfeiffer/tpg36x"]
 exclude = ["demos", "demos/*", "examples", "examples/*", "template", "template/*"]
 
 [workspace.dependencies]
