@@ -1,4 +1,4 @@
-//! Test cases for the LoopbackInterfaceStr.
+//! Test cases for the LoopbackInterfaceString.
 
 use rstest::*;
 

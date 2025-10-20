@@ -33,7 +33,7 @@ mod read_package;
 mod utils;
 
 /// High voltage state for the channels of the Agilent4Uhv.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum HvState {
     /// High voltage is off
     #[default]
