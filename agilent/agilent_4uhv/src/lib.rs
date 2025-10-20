@@ -360,11 +360,7 @@ impl<T: InstrumentInterface> Channel<T> {
         let pressure = {
             let unit = self.unit.lock().expect("Mutex should not be poisoned");
             match *unit {
-                Unit::Torr => {
-                    // HACK: Should be included in measurements
-                    let val_pa = val * 133.32236842;
-                    Pressure::from_pascals(val_pa)
-                }
+                Unit::Torr => Pressure::from_torrs(val),
                 Unit::mBar => Pressure::from_millibars(val),
                 Unit::Pa => Pressure::from_pascals(val),
             }
