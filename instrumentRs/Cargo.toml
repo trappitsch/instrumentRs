@@ -8,7 +8,7 @@ repository = "https://github.com/trappitsch/instrumentRs/tree/main/instrumentRs"
 description = "A library for standardized control of (scientific) instruments from Rust."
 
 [dependencies]
-thiserror       = "2.0.12"
+thiserror       = "2.0"
 serialport      = { workspace = true, optional = true }
 
 [dev-dependencies]
