@@ -90,13 +90,9 @@ impl Display for PressureUnit {
 pub(crate) fn from_value_unit(value: f64, unit: &PressureUnit) -> Tpg36xMeasurement {
     match unit {
         PressureUnit::mBar => Tpg36xMeasurement::Pressure(Pressure::from_millibars(value)),
-        PressureUnit::Torr => {
-            Tpg36xMeasurement::Pressure(Pressure::from_torrs(value))
-        } 
+        PressureUnit::Torr => Tpg36xMeasurement::Pressure(Pressure::from_torrs(value)),
         PressureUnit::Pa => Tpg36xMeasurement::Pressure(Pressure::from_pascals(value)),
-        PressureUnit::mTorr => {
-            Tpg36xMeasurement::Pressure(Pressure::from_millitorrs(value))
-        } 
+        PressureUnit::mTorr => Tpg36xMeasurement::Pressure(Pressure::from_millitorrs(value)),
         PressureUnit::hPa => Tpg36xMeasurement::Pressure(Pressure::from_pascals(value * 100.0)),
         PressureUnit::V => Tpg36xMeasurement::Voltage(Voltage::from_volts(value)),
     }
