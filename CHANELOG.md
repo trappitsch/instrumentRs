@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated dependencies to their latest versions (PR #13). This especially includes an update to `measurements` `0.11.1`,
+  which now includes support for pressures in Torr and mTorr units.
+  This support was used in the Pfeiffer TPG36x gauge driver.
 - Add a `SensorError` variant to `InstrumentError` to represent errors related to sensors (PR #12).
 - Dropped generics in `LoopbackInterface` and renamed it to `LoopbackInterfaceString`. 
   This interface allows testing of instruments that communicate by sending byte encoded strings 

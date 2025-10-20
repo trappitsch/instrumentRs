@@ -8,6 +8,6 @@ members = ["instrumentRs", "other/digoutbox", "lakeshore/lakeshore_336", "pfeiff
 exclude = ["demos", "demos/*", "examples", "examples/*", "template", "template/*"]
 
 [workspace.dependencies]
-measurements    = "0.11.0"
-serialport      = "4.7.2"
-rstest          = "0.25.0"
+measurements    = "0.11.1"
+serialport      = "4.8.1"
+rstest          = "0.26.1"
