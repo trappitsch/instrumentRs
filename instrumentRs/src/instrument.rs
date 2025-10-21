@@ -134,7 +134,7 @@ pub enum InstrumentError {
     /// descriptive enough for the user.
     #[error("{0}")]
     InstrumentStatus(String),
-    /// Instrument response could not be parsed becuase it was unexpected by the driver. This error
+    /// Instrument response could not be parsed because it was unexpected by the driver. This error
     /// contains the response that was received from the instrument.
     #[error("Response from instrument could not be parsed. Response was: {0}")]
     ResponseParseError(String),

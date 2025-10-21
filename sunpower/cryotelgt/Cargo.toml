@@ -1,0 +1,16 @@
+[package]
+name = "sunpower_cryotelgt"
+version = "0.1.0"
+authors = ["Reto Trappitsch <reto@galactic-forensics.space>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "DESCRIPTION"
+
+[dependencies]
+instrumentrs    = { version = "0.1.0", path = "../../instrumentRs", features = ["serial"] }
+measurements    = { workspace = true, features = ["std"] }
+serialport      = { workspace = true }
+
+[dev-dependencies]
+serialport      = { workspace = true }
+rstest          = { workspace = true }
