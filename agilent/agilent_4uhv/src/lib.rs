@@ -44,8 +44,10 @@ pub enum HvState {
 
 impl From<HvState> for Data {
     fn from(state: HvState) -> Self {
-        let val: i64 = state as i64;
-        Data::try_from(val).expect("Always within range")
+        match state {
+            HvState::Off => Data::from(false),
+            HvState::On => Data::from(true),
+        }
     }
 }
 
@@ -330,7 +332,6 @@ impl<T: InstrumentInterface> Channel<T> {
     ///
     /// If a `NotAcknowledged("Data Type Error")` error is returned, the controller is likely not set
     /// connected to a pump and thus, the HV cannot be turned on.
-    /// TEST: This needs to be tested with an actual instrument connected.
     pub fn set_hv_state(&mut self, state: HvState) -> Result<(), InstrumentError> {
         let win = match self.idx {
             0 => 11,
